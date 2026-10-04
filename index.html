@@ -214,8 +214,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .tab:hover{transform:translateX(4px)}
 
 /* banner */
-/* desktop banner kept small and tucked under the title so it doesn't cover the map */
-.banner{position:absolute;left:50%;top:calc(var(--u)*92);transform:translateX(-50%);width:max(150px, calc(var(--u)*236));z-index:3;cursor:pointer;user-select:none;pointer-events:none}
+/* desktop: small, in the top-left corner of the map. phones: moved out of the map entirely (see #bannerSlot) */
+.banner{position:absolute;left:calc(var(--u)*110);top:calc(var(--u)*40);width:max(150px, calc(var(--u)*236));z-index:3;cursor:pointer;user-select:none;pointer-events:none}
 .banner-box{pointer-events:auto}
 .banner.flash .banner-box{animation:flash .5s steps(4)}
 .banner.flash .banner-top canvas{animation:hop .5s steps(4)}
@@ -402,30 +402,28 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 @keyframes fall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
 .burst-wrap{background:none;border:0}
 
-/* ======================= FOLD MODE (phones) ======================= */
+/* ======================= PHONES ======================= */
+/* kept deliberately simple: a clean map, the banner + Spidey under it, six big buttons */
 @media (max-width:760px){
   :root{--bezel:#57b2ea;--bezel-hi:#9ddcff;--bezel-lo:#3a8bd0}
   .fold-only{display:block}
-  .desk-only{display:none!important}
-  .app{padding:10px 0 24px}
+  .desk-only,.hud,.lcd-pack,.ost,.pod,.radar-wrap canvas{display:none!important}
+  .app{padding:14px 0 calc(24px + env(safe-area-inset-bottom,0px))}
   .device{
-    width:calc(100vw - 16px); padding:12px 10px 12px 50px; --b:5px;
+    width:calc(100vw - 24px); padding:12px; --b:5px;
     box-shadow:0 -5px 0 0 var(--ink),0 5px 0 0 var(--ink),-5px 0 0 0 var(--ink),5px 0 0 0 var(--ink),inset 0 5px 0 0 var(--bezel-hi),inset 5px 0 0 0 var(--bezel-hi),inset 0 -7px 0 0 var(--bezel-lo),inset -7px 0 0 0 var(--bezel-lo);
   }
-  .screen{aspect-ratio:auto;height:56vh;height:56svh;max-height:none;box-shadow:0 0 0 3px #1c3d7c,0 0 0 6px var(--ink)}
-  .hud .ruler-left,.hud-corner{display:none}
-  .ruler-top{top:44px;left:120px;right:110px}
-  .ruler-top i{height:10px;border-width:2px;width:14%}
-  .ruler-top i:nth-child(n+5){display:none}
-  .fold-label{position:absolute;left:8px;top:8px;display:flex;gap:6px;align-items:center;color:#9fd2ff}
-  .fold-label .ring{width:30px;height:30px;border:2px solid #9fd2ff;border-radius:50%;position:relative}
-  .fold-label .ring:after{content:"";position:absolute;inset:6px;border:2px solid #9fd2ff;transform:rotate(45deg)}
-  .fold-label b{display:block;font-family:'Press Start 2P';font-size:11px;font-weight:400}
-  .fold-label small{display:block;font-size:7px;letter-spacing:.08em;margin-top:3px}
-  .corner-tr{right:2px;top:-2px;width:62px}
+  .screen{aspect-ratio:auto;height:58vh;height:58svh;min-height:340px;max-height:none;box-shadow:0 0 0 3px #1c3d7c,0 0 0 6px var(--ink)}
+  .corner-tr{right:-10px;top:-12px;width:48px}
   .corner-tr .whitey{display:none}.corner-tr .peachy{display:block}
-  .banner{top:150px;width:206px}
   .leaflet-control-attribution{font-size:8px!important;line-height:1.4!important;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* just the two map buttons, stacked in the corner */
+  .radar-wrap{width:auto;aspect-ratio:auto;left:10px;top:10px;right:auto;bottom:auto;display:flex;flex-direction:column;gap:10px}
+  .rbtn{position:static;width:40px;border-width:3px}
+  /* banner + Spidey live under the map, not on it */
+  .banner-slot{display:flex!important;justify-content:center;align-items:flex-end;gap:12px;margin:18px 0 0}
+  .banner-slot .banner{position:relative;left:auto;top:auto;width:220px}
+  .banner-slot .chibi{position:static;width:44px;flex:none}
   .banner-box{font-size:12px;letter-spacing:2px;padding:12px 8px 9px;--b:3px;
     background:linear-gradient(#ffd0bd 0%,var(--salmon) 45%,var(--salmon-d) 100%);
     box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 0 #ffe5da,4px 5px 0 0 rgba(0,0,0,.3)}
@@ -433,54 +431,24 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
   .banner-top canvas{width:46px}
   .fingers{gap:6px}.fingers span{gap:2px}
   .fingers i{width:9px;height:17px;border-width:2px;border-radius:3px}
-  .radar-wrap{width:96px;right:10px;bottom:26px}
-  .rbtn{width:28px;border-width:2px}
-  .rbtn.globe{right:-10px;top:40px}.rbtn.target{right:16px;bottom:-12px}
-  .lcd-pack{position:absolute;right:8px;top:62px;z-index:4;width:132px}
-  .lcd-frame{padding:5px;background:repeating-linear-gradient(-45deg,#f6d36a 0 6px,#5d86b6 6px 12px);box-shadow:0 0 0 3px var(--ink)}
-  .lcd{background:#1f5326;color:#86f58a;font-family:'VT323';font-size:20px;text-align:center;padding:2px 0;letter-spacing:1px;box-shadow:inset 0 0 0 2px #0c2a10;text-shadow:0 0 6px rgba(134,245,138,.6)}
-  .lid{margin-top:6px;background:#4f80b8;box-shadow:0 0 0 3px var(--ink),inset 0 3px 0 #7fb0e6;height:44px;display:flex;align-items:center;justify-content:center;position:relative}
-  .lid i{position:absolute;width:8px;height:8px;border-radius:50%;background:#c9dcf2;box-shadow:0 0 0 2px var(--ink)}
-  .lid i:nth-child(1){left:6px;top:6px}.lid i:nth-child(2){left:6px;bottom:6px}.lid i:nth-child(4){right:6px;top:6px}.lid i:nth-child(5){right:6px;bottom:6px}
-  .lid canvas{width:40px}
-  .lid span{position:absolute;font-family:'Press Start 2P';font-size:11px;color:#6dfc78;text-shadow:1px 1px 0 var(--ink);margin-top:2px}
-  .ost{position:absolute;left:6px;top:36%;display:flex;flex-direction:column;gap:8px;z-index:12}
-  .ost button{
-    width:36px;height:38px;border:0;padding:0;font-family:'Press Start 2P';font-size:15px;color:#3a0d0a;
-    background:linear-gradient(#ffb3a6 0 60%,#f07a68 60%);
-    box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 #ffd9d2;
-  }
-  .ost.on button{animation:eq .5s steps(2) infinite}
-  .ost.on button:nth-child(2){animation-delay:.16s}.ost.on button:nth-child(3){animation-delay:.33s}
-  @keyframes eq{50%{transform:translateX(3px);filter:brightness(1.15)}}
-  .fold-deck{display:grid;grid-template-columns:22px 1fr;gap:8px;margin-top:14px;align-items:end}
-  .pod{display:flex;flex-direction:column;align-items:center;gap:6px;width:66px;margin-left:-44px}
-  .tomato,.bubble{background:none;border:0;padding:0}
-  .tomato canvas{width:52px}
-  .bubble{width:64px;height:82px;border-radius:40% 40% 46% 46%;display:grid;place-items:end center;padding-bottom:6px;
-    background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(150,215,255,.25) 35%,rgba(60,140,220,.35));box-shadow:0 0 0 3px #1b3a78,inset 0 -6px 0 rgba(30,70,140,.3)}
-  .bubble canvas{width:44px;animation:idle 1.2s steps(2) infinite}
-  .deck{display:grid;grid-template-columns:30px 1fr 1fr 1fr;gap:9px 7px;align-items:center}
-  .db{--c1:var(--peach);--c2:var(--peach-d);--hi:var(--peach-l);border:0;font-family:'Silkscreen';font-size:11px;line-height:1.05;color:#24160a;padding:7px 2px 8px;min-height:38px;letter-spacing:0;
+  .fold-deck{margin-top:18px}
+  .deck{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px}
+  .db{--c1:var(--peach);--c2:var(--peach-d);--hi:var(--peach-l);border:0;font-family:'Silkscreen';font-size:12px;line-height:1.1;color:#24160a;padding:8px 4px 10px;min-height:46px;letter-spacing:.04em;
     background:linear-gradient(var(--c1) 0 60%,var(--c2) 60%);
     box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 var(--hi)}
   .db:active{transform:translateY(2px)}
   .db.g{--c1:#7bdc90;--c2:#3d9f57;--hi:#c2f6cc;color:#0c2213}
-  .db.r{--c1:#ff8d80;--c2:#c63a30;--hi:#ffc3bc;color:#2c0705}
-  .db.off{--c1:#86a9c8;--c2:#5f86ab;--hi:#a6c4de;color:#3b5a7a}
-  .db.sm{padding:7px 0 8px;font-size:10px}
-  .db.lit{outline:3px solid #fff;outline-offset:2px}
-  .hang-row{width:calc(100vw - 16px);margin-top:16px;padding:0 6px;gap:14px}
-  .hang-row .pbtn{font-size:14px;min-width:0;flex:1;padding:9px 6px 11px;--b:4px}
-  .footer{flex-direction:column;gap:18px;margin-top:26px}
+  @media (max-width:380px){.db{font-size:11px;letter-spacing:0}}
+  .hang-row{width:calc(100vw - 24px);margin-top:20px;padding:0;gap:14px}
+  .hang-row .pbtn{font-size:14px;min-width:0;flex:1;padding:10px 6px 12px;--b:4px}
+  .footer{flex-direction:column;gap:18px;margin-top:30px}
   .logo-kicker{font-size:11px}.logo-main{font-size:30px}.logo-sub{font-size:12px}.logo-date{font-size:12px}
   .pw-k{font-size:13px;text-align:center}.pw-m{font-size:20px;text-align:center}.pw-s{font-size:16px;text-align:center}
   .toast{bottom:auto;top:10px;transform:translate(-50%,-20px);font-size:12px}
   .toast.show{transform:translate(-50%,0)}
   .speech{position:fixed;left:16px;right:16px;bottom:24px;max-width:none}
   .speech:after{display:none}
-}
-@media (prefers-reduced-motion:reduce){
+}@media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;animation-iteration-count:1!important}
   .ticker-track{animation:none}
 }
@@ -554,6 +522,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
       <div class="toast" id="toast"></div>
     </div>
 
+    <div class="banner-slot fold-only" id="bannerSlot"></div>
+
     <div class="bottom-bar desk-only">
       <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
       <button class="sound-btn" id="soundBtn" data-act="music" aria-label="Toggle soundtrack">
@@ -567,22 +537,15 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
         <button class="bubble" data-act="talk" aria-label="Spidey says hi"><canvas id="podCanvas" class="sprite"></canvas></button>
       </div>
       <div class="deck">
-        <button class="db g sm lit" data-act="a1">A.1</button>
-        <button class="db g" data-act="prof1">PROF&nbsp;1</button>
-        <button class="db" data-act="terrain">TERRAIN</button>
+        <button class="db g" data-act="files">AGENT FILES</button>
         <button class="db" data-act="chat">CHAT</button>
-        <button class="db r sm" data-act="a2">A.2</button>
-        <button class="db g" data-act="prof2">PROF&nbsp;2</button>
-        <button class="db off" data-act="3d">3D&nbsp;VIEW</button>
         <button class="db" data-act="archive">ARCHIVE</button>
-        <span></span>
-        <button class="db g" data-act="prof3">PROF&nbsp;3</button>
-        <button class="db" data-act="center">CENTER LOC</button>
-        <button class="db" data-act="share">SHARE</button>
+        <button class="db" data-act="center">FIND ME</button>
+        <button class="db" data-act="terrain">TERRAIN</button>
+        <button class="db g" data-act="music" id="deckMusic">MUSIC: OFF</button>
       </div>
     </div>
-
-    <button class="chibi desk-only" data-act="talk" aria-label="Spidey"><canvas id="chibiCanvas" class="sprite"></canvas></button>
+    <button class="chibi" data-act="talk" aria-label="Spidey"><canvas id="chibiCanvas" class="sprite"></canvas></button>
     <div class="speech" id="speech"></div>
   </div>
 
@@ -907,7 +870,8 @@ const Sound = {
   stopMusic(){ this.playing = false; clearInterval(this.timer); syncSoundUI(); },
   toggle(){ this.playing ? this.stopMusic() : this.startMusic(); store.set('music', this.playing); }
 };
-function syncSoundUI(){ $('#soundBtn').classList.toggle('on', Sound.playing); $('#ost').classList.toggle('on', Sound.playing); }
+function syncSoundUI(){ $('#soundBtn').classList.toggle('on', Sound.playing); $('#ost').classList.toggle('on', Sound.playing);
+  const d = $('#deckMusic'); if (d) d.textContent = 'MUSIC: ' + (Sound.playing ? 'ON' : 'OFF'); }
 
 /* ================================================================
    sightings data
@@ -1035,7 +999,10 @@ function worldView(fly){
   const c = [22, 10];
   fly ? map.flyTo(c, z, { duration: 1.4 }) : map.setView(c, z);
 }
-if (fold0) map.setView([CONFIG.home.lat, CONFIG.home.lng], 13); else worldView(false);
+// always open on Dunedin; the globe button zooms out to the world
+// centred a touch south of the Octagon so St Clair, the Rialto and the Edgar Centre are all in frame
+const homeView = () => map.setView([CONFIG.home.lat - .011, CONFIG.home.lng + .006], 12.5);
+homeView();
 
 // faint graticule like the original
 const grat = { color: '#3d73bd', weight: 1, opacity: .55, interactive: false };
@@ -1052,18 +1019,21 @@ const filt = { green: true, red: true };
 const markers = new Map();
 const pinLayer = L.layerGroup().addTo(map);
 const iconFor = s => heartMode ? ICONS.heart : explored.has(s.id) ? ICONS.green : ICONS.red;
+// the map repeats sideways when zoomed out, so every pin is also drawn on the copies of the world either side
+// (otherwise the repeated New Zealand next to the real one shows up empty)
+const COPIES = [0, -360, 360];
 sightings.forEach(s => {
-  const m = L.marker([s.lat, s.lng], { icon: iconFor(s), keyboard: true, title: s.place, riseOnHover: true });
-  m.on('click', () => openSighting(s)); markers.set(s.id, m); pinLayer.addLayer(m);
+  const ms = COPIES.map(o => L.marker([s.lat, s.lng + o], { icon: iconFor(s), keyboard: o === 0, title: s.place, riseOnHover: true })
+    .on('click', () => openSighting(s)));
+  markers.set(s.id, ms); ms.forEach(m => pinLayer.addLayer(m));
 });
-memories.forEach(mem => {
-  L.marker([mem.lat, mem.lng], { icon: heartMode ? ICONS.heart : ICONS.star, zIndexOffset: 800, title: mem.title })
-    .on('click', () => openMemory(mem)).addTo(map);
-});
-function refreshAll(){ sightings.forEach(s => markers.get(s.id).setIcon(iconFor(s))); }
+memories.forEach(mem => COPIES.forEach(o =>
+  L.marker([mem.lat, mem.lng + o], { icon: ICONS.star, zIndexOffset: 800, title: mem.title, keyboard: o === 0 })
+    .on('click', () => openMemory(mem)).addTo(map)));
+function refreshAll(){ sightings.forEach(s => markers.get(s.id).forEach(m => m.setIcon(iconFor(s)))); }
 function applyFilters(){
-  sightings.forEach(s => { const m = markers.get(s.id), show = explored.has(s.id) ? filt.green : filt.red;
-    if (show && !pinLayer.hasLayer(m)) pinLayer.addLayer(m); else if (!show && pinLayer.hasLayer(m)) pinLayer.removeLayer(m); });
+  sightings.forEach(s => { const show = explored.has(s.id) ? filt.green : filt.red;
+    markers.get(s.id).forEach(m => { if (show && !pinLayer.hasLayer(m)) pinLayer.addLayer(m); else if (!show && pinLayer.hasLayer(m)) pinLayer.removeLayer(m); }); });
   $('#tabGreen').classList.toggle('on', filt.green); $('#tabRed').classList.toggle('on', filt.red);
   document.querySelectorAll('[data-act="a1"]').forEach(b => b.classList.toggle('lit', filt.green && filt.red));
   document.querySelectorAll('[data-act="a2"]').forEach(b => b.classList.toggle('lit', !filt.green && filt.red));
@@ -1140,8 +1110,8 @@ function openSighting(s){
 function explore(s){
   if (explored.has(s.id)) return;
   explored.add(s.id); saveExplored(); closePanel();
-  const m = markers.get(s.id); m.setIcon(iconFor(s));
-  const img = m.getElement() && m.getElement().querySelector('.pin'); if (img){ img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop'); }
+  markers.get(s.id).forEach(m => { m.setIcon(iconFor(s));
+    const img = m.getElement() && m.getElement().querySelector('.pin'); if (img){ img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop'); } });
   const fx = L.marker([s.lat, s.lng], { icon: L.divIcon({ className: 'burst-wrap', html: '<div class="burst"></div>', iconSize: [PIN, PIN], iconAnchor: [PIN/2, PIN/2] }), interactive: false }).addTo(map);
   setTimeout(() => map.removeLayer(fx), 700);
   Sound.coin(); updateCounters(); applyFilters();
@@ -1183,8 +1153,8 @@ function openMemory(mem){
     actions: [{ label: 'ZOOM IN', tone: 'blue', fn: () => zoomTo(mem.lat, mem.lng, 16) }] });
 }
 function openHer(){
-  openPanel({ tone: 'peach', icon: URL_.me, kicker: 'LOCATION LOCK', title: `HI, AGENT ${esc(HER)}`,
-    body: `<p class="quote">Spidey sightings near you are now on the radar. Happy hunting.</p><dl class="stat">
+  openPanel({ tone: 'peach', icon: URL_.me, kicker: 'SIGHTING IN YOUR DIRECT VICINITY', title: `SUBJECT IDENTIFIED: ${esc(HER)}`,
+    body: `<p class="quote">Wait. It's you.</p><dl class="stat"><dt>TRACKER ACCURACY</dt><dd>100%</dd>
       <dt>EYE COLOUR</dt><dd>BROWN. (GREEN WHEN REALLY HAPPY. CHECK A MIRROR.)</dd></dl><p class="meta">RECOMMENDED ACTION: TEXT ${esc(ME)}.</p>`,
     actions: [{ label: '<3', tone: 'red', fn: () => { closePanel(); heartAttack(); } }] });
 }
@@ -1275,14 +1245,14 @@ function chat(){
   setTimeout(() => { const i = $('#chatIn'); i && i.focus(); }, 50);
 }
 async function share(){
-  const text = `I've explored ${explored.size}/${TOTAL} Spidey sightings on my Spidey Tracker. Best one so far: the Rialto, 3 Oct.`;
+  const text = `I've explored ${explored.size}/${TOTAL} Spidey sightings on my Spidey Tracker. Spider-sense says the best sighting is ${HER}.`;
   try { if (navigator.share){ await navigator.share({ title: 'Spidey Tracker', text }); return; } } catch(e){ if (e && e.name === 'AbortError') return; }
   try { await navigator.clipboard.writeText(text); toast('SIGHTING REPORT COPIED'); } catch(e){ toast('SHARE UNAVAILABLE ON THIS DEVICE'); }
 }
 function finale(){
   heartRain(40); Sound.fanfare();
-  openPanel({ tone: 'red', icon: URL_.heart, kicker: `ALL ${TOTAL} SIGHTINGS EXPLORED`, title: 'MISSION COMPLETE',
-    body: `<div class="reveal"><p style="animation-delay:.2s">Every sighting on the map, explored.</p><div class="big-reveal" style="animation-delay:1.4s">NICE WORK,<br>AGENT ${esc(HER)}.</div>
+  openPanel({ tone: 'red', icon: URL_.heart, kicker: `ALL ${TOTAL} SIGHTINGS EXPLORED`, title: 'ONE SIGHTING REMAINS...',
+    body: `<div class="reveal"><p style="animation-delay:.2s">Scanning one last time...</p><div class="big-reveal" style="animation-delay:1.4s">IT'S YOU,<br>${esc(HER)}.</div>
       <p class="quote" style="animation-delay:2.6s">${esc(sub(CONFIG.finalMessage))}</p></div>`,
     actions: [{ label: '<3', tone: 'red', fn: () => { closePanel(); heartAttack(); } }] });
 }
@@ -1318,7 +1288,7 @@ function heartRain(n){
 let heartT;
 function heartAttack(){
   heartMode = true; refreshAll(); heartRain(44); Sound.fanfare();
-  Banner.set(`HI ${HER}!<br>CRAZY STUFF`, 9000);
+  Banner.set(`${HER} DETECTED<br>CRAZY STUFF`, 9000);
   clearTimeout(heartT); heartT = setTimeout(() => { heartMode = false; refreshAll(); }, 12000);
 }
 let typed = '';
@@ -1369,8 +1339,8 @@ function updateRadarDots(){
   const sz = map.getSize(), hx = sz.x / 2, hy = sz.y / 2, out = [];
   const addPt = (ll, col) => { const p = map.latLngToContainerPoint(ll), x = (p.x - hx) / Math.max(hx, hy), y = (p.y - hy) / Math.max(hx, hy);
     if (x*x + y*y < 1) out.push({ x, y, col }); };
-  sightings.forEach(s => { const m = markers.get(s.id); if (pinLayer.hasLayer(m)) addPt(m.getLatLng(), explored.has(s.id) ? '#7cf09a' : '#ff6a5c'); });
-  memories.forEach(m => addPt([m.lat, m.lng], '#bfe4ff'));
+  sightings.forEach(s => markers.get(s.id).forEach(m => { if (pinLayer.hasLayer(m)) addPt(m.getLatLng(), explored.has(s.id) ? '#7cf09a' : '#ff6a5c'); }));
+  memories.forEach(m => COPIES.forEach(o => addPt([m.lat, m.lng + o], '#bfe4ff')));
   if (herPos) addPt([herPos.lat, herPos.lng], '#ffd24d');
   radarDots = out;
 }
@@ -1408,6 +1378,8 @@ function drawRadar(t){
    ================================================================ */
 const ACTIONS = {
   prof1: () => profile(1), prof2: () => profile(2), prof3: () => profile(3),
+  files: () => openPanel({ tone: 'green', icon: URL_.green, kicker: 'CLASSIFIED', title: 'AGENT FILES', body: '<p>Pick a file.</p>',
+    actions: [{ label: HER, tone: 'red', fn: () => profile(1) }, { label: 'SPIDEY', tone: 'green', fn: () => profile(2) }, { label: ME, tone: 'blue', fn: () => profile(3) }] }),
   sense: spiderSense, center: locate, world: () => { closePanel(); worldView(true); Banner.count(); },
   filterGreen: () => { filt.green = !filt.green; applyFilters(); Sound.blip(); toast(filt.green ? 'SHOWING EXPLORED' : 'HIDING EXPLORED'); },
   filterRed:   () => { filt.red = !filt.red; applyFilters(); Sound.blip(); toast(filt.red ? 'SHOWING UNEXPLORED' : 'HIDING UNEXPLORED'); },
@@ -1440,10 +1412,16 @@ setInterval(() => {
   setTimeout(() => { paint($('#chibiCanvas'), chibi(HEAD), PAL, 4); paint($('#podCanvas'), chibi(HEAD), PAL, 3); }, 160);
 }, 3800);
 
-const onResize = () => { map.invalidateSize(); sizeRadar(); updateRadarDots(); snapSprites(); };
+// on phones the banner lives below the map instead of on top of it
+function placeBanner(){
+  const b = $('#banner'), c = $('.chibi');
+  if (isFold()){ $('#bannerSlot').append(c, b); }
+  else { $('#screen').insertBefore(b, $('.radar-wrap')); $('#device').insertBefore(c, $('#speech')); }
+}
+const onResize = () => { placeBanner(); map.invalidateSize(); sizeRadar(); updateRadarDots(); snapSprites(); };
 addEventListener('resize', onResize);
 new ResizeObserver(sizeRadar).observe(radar);
-sizeRadar(); updateRadarDots(); updateCounters(); applyFilters(); snapSprites();
+placeBanner(); sizeRadar(); updateRadarDots(); updateCounters(); applyFilters(); snapSprites();
 requestAnimationFrame(radarLoop);
 
 /* ================================================================
@@ -1456,8 +1434,8 @@ requestAnimationFrame(radarLoop);
     '> CALIBRATING SPIDER-SENSE ......... OK',
     `> LOADING SIGHTINGS DATABASE ....... ${TOTAL} FOUND`,
     '> CHECKING SPIDERS VS THUMB SIZE ... SAFE',
-    `> AGENT LOGIN: ${HER} ......... OK`,
-    '> WELCOME BACK, AGENT.'
+    `> SCANNING FOR ${HER} ......`,
+    '> TARGET ACQUIRED. HI MADELINE.'
   ];
   let skip = false; $('#boot').addEventListener('click', () => skip = true, { once: true });
   for (let i = 0; i < lines.length; i++){
@@ -1472,18 +1450,7 @@ function begin(withSound){
   if (withSound){ Sound.init(); Sound.start(); if (store.get('music', true)) setTimeout(() => Sound.startMusic(), 500); }
   const boot = $('#boot'); if (boot){ boot.classList.add('gone'); setTimeout(() => boot.remove(), 600); }
   onResize();
-  if (isFold()){ map.setView([CONFIG.home.lat, CONFIG.home.lng], 13); setTimeout(() => Banner.set('SIGHTING IN YOUR<br>DIRECT VICINITY', 4500), 450); }
-  else {
-    // desktop intro: the whole world first (like the original), then a signal pulls the map home to Dunedin
-    worldView(false); setTimeout(() => Banner.count(), 450);
-    let touched = false; map.once('dragstart', () => touched = true);
-    setTimeout(() => {
-      if (touched || !modal.hidden) return;
-      Sound.alarm(); toast('NEW SIGNAL DETECTED: ' + String(CONFIG.home.label).toUpperCase());
-      Banner.set('SIGHTING IN YOUR<br>DIRECT VICINITY', 6000);
-      map.flyTo([CONFIG.home.lat, CONFIG.home.lng], 12.5, { duration: 3.2 });
-    }, 3600);
-  }
+  homeView(); setTimeout(() => Banner.count(), 450);
 }
 $('#startBtn').addEventListener('click', e => { e.stopPropagation(); begin(true); });
 Banner.count();
