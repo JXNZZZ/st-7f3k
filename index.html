@@ -1,0 +1,1498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spidey Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+<script>
+/* =====================================================================
+   ✏️  PERSONALISE ME  — everything Madeline sees comes from here.
+   ===================================================================== */
+const CONFIG = {
+  herName:  "MADELINE",
+  yourName: "JACKIESON",            // her name for you
+  firstMovie: "SPIDER-MAN: BRAND NEW DAY",
+  firstMovieDate: "3 OCT 2026",
+
+  // Home base: the Octagon. Fallback if her phone won't share location.
+  home: { lat: -45.8742, lng: 170.5036, label: "DUNEDIN" },
+
+  // ★ Blue-star "MAJOR SIGHTINGS". Oldest first. Add / edit freely.
+  memories: [
+    { title: "THE KITCHEN", place: "TAHUNA", date: "YEAR 8", lat: -45.8990, lng: 170.5185,
+      note: "Where it actually started. Chocolate soufflé: success. Pierogi: attempted. Avocado tacos: the avocados were rocks. One chef had a crush on his chef professionalé. He took three years to do anything about it." },
+    { title: "THE RINK", place: "DUNEDIN ICE STADIUM", date: "12 SEP 2026", lat: -45.9078, lng: 170.5120,
+      note: "A curling game, then a walk. That night: texting until 1am about wizzrobes, Vah Ruta and why sheet A is the worst. Not bad for two people who'd known each other for years and never texted." },
+    { title: "DAY ONE", place: "THE PAVILION", date: "25 SEP 2026", lat: -45.8957, lng: 170.5262,
+      note: "Green tutu. Somerville face paint. One hug that came out of nowhere, then two seconds that both parties later described as \"unexpected but good\"." },
+    { title: "BRONZE", place: "NASEBY", date: "26-28 SEP 2026", lat: -45.0247, lng: 170.1442,
+      note: "Third place at curling nationals. Three wins in a row. Medal value: about two dollars. Symbolic value: really cool. Spent the whole weekend wishing you were there." },
+    { title: "THE WALK", place: "ST CLAIR", date: "1 OCT 2026", lat: -45.9113, lng: 170.4880,
+      note: "15,000 steps. 10 km. One person jumped when he noticed your eyes. Afterwards you both agreed you should have sat in the sand. Logged for next time." },
+    { title: "FIRST MOVIE", place: "RIALTO", date: "3 OCT 2026", lat: -45.8768, lng: 170.5021,
+      note: "Spider-Man: Brand New Day, the 4:30 session, with Felix, Harrison and Feidhlim. Tuke: present. Coziness: confirmed. You both hid your eyes at the sad bit (he says you copied him). A hand got held where nobody could see. That night you told your parents. Your mum's verdict: you looked happy about it." },
+    { title: "NEXT MISSION", place: "CLASSIFIED", date: "SOON", lat: -45.8889, lng: 170.5112, cipher: true,
+      note: "Incoming transmission. Encrypted with a cipher you've cracked before (it took you 45 minutes last time)." }
+  ],
+
+  // The secret message in the NEXT MISSION pin. She decodes it herself.
+  transmission: "ROLLER SKATING WHEN YOU GET BACK. I WILL FALL. YOU SAID YOU WOULD CATCH ME.",
+
+  // Shown when every sighting has been explored.
+  finalMessage: "You found every single sighting. Lowk impressive. Thanks for the walk, the movie, the semicolons, and for putting up with my autocorrect. Next up: roller skating. You said you'd catch me. — {ME}",
+
+  chibiLines: [
+    "HI {HER}! I CAN'T WINK EITHER. IT'S THE MASK.",
+    "SPIDERS ARE OUR FRIENDS, UNLESS THEY'RE BIGGER THAN YOUR THUMB. WISE WORDS.",
+    "BOTW OR TOTK? ...CORRECT.",
+    "I'D RATHER FIGHT A BOKOBLIN THAN A WIZZROBE. THE ELECTRIC ONES ARE UNFAIR.",
+    "THWIP! ...SORRY. GOT EXCITED.",
+    "TIP: THE BIG SPIDER BUTTON FINDS SIGHTINGS FOR YOU.",
+    "I HEAR {ME} OWES YOU A ROLLER SKATING SESSION. I'LL BE WATCHING.",
+    "GOOD LUCK IN CHRISTCHURCH. THE OTHER COMPETITORS WILL NEED IT MORE.",
+    "CRAZY. (I PICKED THAT UP FROM YOU.)",
+    "SOUNDS LIKE A PLAN, STAN.",
+    "おもしろい! ...DID I SAY THAT RIGHT?",
+    "\"EXISTING IS THE MOST DIFFICULT TEST, AND WE DO IT EVERY DAY.\" MADDY WISDOM.",
+    "PSST. TRY TYPING YOUR NAME. (OR TAP ME A BUNCH.)"
+  ],
+
+  ticker: [
+    "WELCOME BACK, AGENT {HER}",
+    "FIRST CONTACT: {MOVIE} // RIALTO // 3 OCT 2026",
+    "SPIDERS ARE OUR FRIENDS UNLESS THEY ARE BIGGER THAN YOUR THUMB",
+    "BOTW > TOTK",
+    "SHEET A REMAINS UNDEFEATED",
+    "GO SOMERVILLE",
+    "CRAZY STUFF",
+    "NEXT MISSION: ENCRYPTED. CHECK THE MAP."
+  ]
+};
+</script>
+
+<style>
+:root{
+  --page:#2343b4; --page-d:#18338f;
+  --ink:#0c1533;
+  --bezel:#5b9bd3; --bezel-hi:#8cc6f0; --bezel-lo:#3d76b2;
+  --ocean:#0b1a35; --navy:#12285c;
+  --red:#e2483f; --red-d:#a3261f; --red-l:#ff8577;
+  --green:#4fae67; --green-d:#2f7a45; --green-l:#8fe3a0;
+  --sky:#6bb3e6; --sky-d:#336fa8;
+  --peach:#fcd394; --peach-d:#ec9d57; --peach-l:#fff1cb;
+  --salmon:#ffb39b; --salmon-d:#ee7f63;
+  --hud:#6aa8e6;
+  --white:#f2f6ff;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--page);
+  background-image:radial-gradient(ellipse at 50% -10%, #2f58d4 0%, var(--page) 45%, var(--page-d) 100%);
+  background-attachment:fixed;
+  color:var(--white); font-family:'Silkscreen',monospace;
+  min-height:100vh; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+.sprite{image-rendering:crisp-edges;image-rendering:pixelated;display:block}
+.fold-only{display:none}
+
+/* ---------- generic pixel button ---------- */
+.pbtn{
+  --c1:var(--peach); --c2:var(--peach-d); --hi:var(--peach-l); --b:4px;
+  border:0; color:#1d120a; font-family:'Silkscreen',monospace; letter-spacing:.06em;
+  background:linear-gradient(var(--c1) 0 60%, var(--c2) 60% 100%);
+  padding:8px 22px 10px; position:relative; white-space:nowrap;
+  box-shadow:0 calc(-1*var(--b)) 0 0 var(--ink),0 var(--b) 0 0 var(--ink),calc(-1*var(--b)) 0 0 0 var(--ink),var(--b) 0 0 0 var(--ink),
+             inset 0 var(--b) 0 0 var(--hi), inset 0 calc(-1*var(--b)) 0 0 rgba(0,0,0,.14);
+  transition:transform .06s steps(1);
+}
+.pbtn:hover{filter:brightness(1.06)}
+.pbtn:active{transform:translateY(3px)}
+.pbtn.red{--c1:#ff7b6e;--c2:var(--red-d);--hi:#ffb2a8;color:#fff}
+.pbtn.green{--c1:#71d088;--c2:var(--green-d);--hi:#b7f3c3;color:#0d2414}
+.pbtn.blue{--c1:#8fcaf5;--c2:var(--sky-d);--hi:#d2ecff;color:#0c1a33}
+.pbtn.sm{font-size:15px;padding:6px 14px 8px}
+
+/* ---------- app & device frame (desktop units = screenshot pixels) ---------- */
+.app{--W:min(1400px, calc(100vw - 40px)); --u:calc(var(--W) / 1890); padding:calc(var(--u)*40) env(safe-area-inset-right,0px) calc(28px + env(safe-area-inset-bottom,0px)) env(safe-area-inset-left,0px)}
+/* phones held sideways: shrink the whole device so it fits the short screen instead of running off the bottom */
+@media (min-width:761px) and (max-height:560px){
+  .app{--W:min(1400px, calc(100vw - 40px), calc((100vh - 40px) * 1.58)); --W:min(1400px, calc(100vw - 40px), calc((100svh - 40px) * 1.58))}
+}
+.device{
+  position:relative; width:var(--W); margin:0 auto; background:var(--bezel);
+  padding:calc(var(--u)*65) calc(var(--u)*60) calc(var(--u)*145) calc(var(--u)*65);
+  --b:calc(var(--u)*7);
+  box-shadow:0 calc(-1*var(--b)) 0 0 var(--ink),0 var(--b) 0 0 var(--ink),calc(-1*var(--b)) 0 0 0 var(--ink),var(--b) 0 0 0 var(--ink),
+    inset 0 calc(var(--u)*9) 0 0 var(--bezel-hi), inset calc(var(--u)*9) 0 0 0 var(--bezel-hi),
+    inset 0 calc(var(--u)*-14) 0 0 var(--bezel-lo), inset calc(var(--u)*-14) 0 0 0 var(--bezel-lo),
+    calc(var(--u)*18) calc(var(--u)*18) 0 0 rgba(6,18,70,.55);
+}
+.device.shake{animation:shake .45s steps(2) 2}
+@keyframes shake{0%{transform:translate(0,0)}25%{transform:translate(-7px,3px)}50%{transform:translate(6px,-4px)}75%{transform:translate(-4px,-3px)}100%{transform:translate(0,0)}}
+
+.screen{
+  position:relative; width:100%; aspect-ratio:1765/860; max-height:70vh; overflow:hidden; background:var(--ocean);
+  box-shadow:0 0 0 calc(var(--u)*5) #1c3d7c, 0 0 0 calc(var(--u)*10) var(--ink), inset 0 0 0 1px rgba(120,180,255,.15);
+}
+#map{position:absolute; inset:0; z-index:0; background:var(--ocean)}
+.leaflet-container{background:var(--ocean); font-family:'Silkscreen',monospace; outline:0}
+.tiles-navy{filter:brightness(1.55) sepia(1) hue-rotate(178deg) saturate(3.2) brightness(.78) contrast(1.08)}
+.tiles-labels{filter:brightness(1.25) sepia(.35) hue-rotate(178deg) saturate(1.6)}
+.tiles-terrain{filter:grayscale(1) sepia(1) hue-rotate(180deg) saturate(3) brightness(.62) contrast(1.15)}
+.leaflet-control-attribution{
+  background:rgba(225,229,238,.92)!important; color:#1a1d29!important; font:11px/1.6 Arial,Helvetica,sans-serif!important;
+  padding:1px 8px!important; margin:0 6px 6px 0!important;
+}
+.leaflet-control-attribution a{color:#1a1d29!important}
+.pinwrap{background:none;border:0}
+.pin{width:100%;height:100%;transition:filter .1s;-webkit-user-drag:none;user-select:none}
+.pinwrap:hover .pin{filter:brightness(1.18)}
+.pin.pop{animation:pinpop .55s steps(6)}
+@keyframes pinpop{0%{transform:scale(1)}35%{transform:scale(1.7) rotate(-8deg)}70%{transform:scale(.9)}100%{transform:scale(1)}}
+.star-bob .pin{animation:bob 1.6s steps(4) infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.burst{position:absolute;inset:-60%;border:4px dashed #b7ffc6;border-radius:50%;animation:burst .6s steps(6) forwards}
+@keyframes burst{from{transform:scale(.3);opacity:1}to{transform:scale(1.4);opacity:0}}
+.me-pin{position:relative;width:100%;height:100%}
+.me-pin img{position:relative;z-index:1;width:100%;height:100%}
+.me-pin .ring{position:absolute;inset:0;border:4px solid #ffc94d;border-radius:50%;animation:ring 1.6s steps(8) infinite}
+@keyframes ring{from{transform:scale(1);opacity:1}to{transform:scale(3.2);opacity:0}}
+
+/* HUD decoration over the map */
+.hud{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ruler-top{position:absolute;top:calc(var(--u)*58);left:calc(var(--u)*200);right:calc(var(--u)*80);display:flex;justify-content:space-between}
+.ruler-top i{
+  width:8.6%; height:calc(var(--u)*24); opacity:.75;
+  border:calc(var(--u)*3) solid var(--hud); border-top:0;
+  background:repeating-linear-gradient(90deg,var(--hud) 0 calc(var(--u)*2),transparent calc(var(--u)*2) calc(var(--u)*11)) bottom/100% 45% no-repeat;
+}
+.ruler-left{position:absolute;left:calc(var(--u)*58);top:calc(var(--u)*200);bottom:calc(var(--u)*60);display:flex;flex-direction:column;justify-content:space-between}
+.ruler-left i{
+  height:27%; width:calc(var(--u)*30); opacity:.75;
+  border:calc(var(--u)*3) solid var(--hud); border-right:0;
+  background:repeating-linear-gradient(180deg,var(--hud) 0 calc(var(--u)*2),transparent calc(var(--u)*2) calc(var(--u)*11)) left/45% 100% no-repeat;
+}
+.hud-corner{position:absolute;left:calc(var(--u)*14);top:calc(var(--u)*14);width:calc(var(--u)*120);height:calc(var(--u)*120);border-left:2px solid var(--hud);border-top:2px solid var(--hud);opacity:.5}
+
+/* title plate */
+.title-plate{
+  position:absolute; left:50%; top:calc(var(--u)*30); transform:translateX(-50%); z-index:10;
+  display:flex; align-items:center; gap:calc(var(--u)*6); padding:calc(var(--u)*10) calc(var(--u)*24);
+  background:#14295e;
+  box-shadow:0 0 0 calc(var(--u)*6) #5fa4e6, 0 0 0 calc(var(--u)*11) #1a3570, 0 0 0 calc(var(--u)*15) var(--ink);
+}
+.title-plate .t{
+  font-family:'Press Start 2P',monospace; font-size:calc(var(--u)*46); color:#eef6ff; letter-spacing:calc(var(--u)*2);
+  --s:calc(var(--u)*3); --c:#2e63cf;
+  text-shadow:var(--s) 0 0 var(--c),calc(-1*var(--s)) 0 0 var(--c),0 var(--s) 0 var(--c),0 calc(-1*var(--s)) 0 var(--c),
+    var(--s) var(--s) 0 var(--c),calc(-1*var(--s)) var(--s) 0 var(--c),var(--s) calc(-1*var(--s)) 0 var(--c),calc(-1*var(--s)) calc(-1*var(--s)) 0 var(--c),
+    0 calc(var(--u)*8) 0 var(--ink);
+}
+.title-plate canvas{width:calc(var(--u)*76);margin:calc(var(--u)*-26) 0}
+
+/* corner badges + side tabs */
+.corner{position:absolute;z-index:15;width:calc(var(--u)*128);background:none;border:0;padding:0}
+.corner canvas,.tab canvas,.chibi canvas,.tomato canvas{margin:0 auto}
+.corner canvas{width:100%}
+.corner:hover{filter:brightness(1.1)}
+.corner:active{transform:translateY(2px)}
+.corner-tl{left:calc(var(--u)*-26);top:calc(var(--u)*-26)}
+.corner-tr{right:calc(var(--u)*-26);top:calc(var(--u)*-26)}
+.corner-tr .peachy{display:none}
+.side-tabs{position:absolute;left:calc(var(--u)*-16);top:calc(var(--u)*282);display:flex;flex-direction:column;gap:calc(var(--u)*16);z-index:15}
+.tab{width:calc(var(--u)*100);background:none;border:0;padding:0;transition:transform .08s steps(2)}
+.tab canvas{width:100%}
+.tab:not(.on){filter:grayscale(.9) brightness(.6)}
+.tab:hover{transform:translateX(4px)}
+
+/* banner */
+/* desktop banner kept small and tucked under the title so it doesn't cover the map */
+.banner{position:absolute;left:50%;top:calc(var(--u)*92);transform:translateX(-50%);width:max(150px, calc(var(--u)*236));z-index:3;cursor:pointer;user-select:none;pointer-events:none}
+.banner-box{pointer-events:auto}
+.banner.flash .banner-box{animation:flash .5s steps(4)}
+.banner.flash .banner-top canvas{animation:hop .5s steps(4)}
+@keyframes flash{0%{transform:scale(1)}30%{transform:scale(1.08)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes hop{40%{transform:translateY(-10px)}}
+.banner-top{display:flex;justify-content:center;align-items:flex-end;gap:calc(var(--u)*5);margin-bottom:calc(var(--u)*-7);position:relative;z-index:1}
+.banner-top canvas{width:max(28px, calc(var(--u)*46))}
+.fingers{display:flex;gap:calc(var(--u)*9);margin-bottom:calc(var(--u)*1)}
+.fingers span{display:flex;gap:calc(var(--u)*2)}
+.fingers i{width:calc(var(--u)*12);height:calc(var(--u)*22);background:#fff;border:max(2px, calc(var(--u)*3)) solid var(--ink);border-radius:calc(var(--u)*4)}
+.banner-box{
+  text-align:center; padding:calc(var(--u)*14) calc(var(--u)*10) calc(var(--u)*11);
+  font-family:'Silkscreen',monospace; font-size:max(10px, calc(var(--u)*18)); line-height:1.12; letter-spacing:calc(var(--u)*2); color:#2a1a0e;
+  background:linear-gradient(#ffe6ad 0%, #fbc884 45%, #efa25b 100%);
+  --b:max(2px, calc(var(--u)*4));
+  box-shadow:0 calc(-1*var(--b)) 0 0 var(--ink),0 var(--b) 0 0 var(--ink),calc(-1*var(--b)) 0 0 0 var(--ink),var(--b) 0 0 0 var(--ink),
+    inset 0 calc(var(--u)*4) 0 0 #fff4d6, calc(var(--u)*5) calc(var(--u)*6) 0 0 rgba(0,0,0,.3);
+}
+
+/* radar */
+.radar-wrap{position:absolute;right:calc(var(--u)*72);bottom:calc(var(--u)*72);width:calc(var(--u)*214);aspect-ratio:1;z-index:3}
+.radar-wrap canvas{width:100%;height:100%;display:block}
+.rbtn{
+  position:absolute;width:calc(var(--u)*54);min-width:26px;aspect-ratio:1;border-radius:50%;padding:0;
+  background:#a9d8fb;border:calc(var(--u)*4) solid var(--ink);display:grid;place-items:center;box-shadow:inset 0 -3px 0 #5b9bd3
+}
+.rbtn svg{width:72%;height:72%}
+.rbtn:active{transform:translateY(2px)}
+.rbtn.globe{right:calc(var(--u)*-30);top:calc(var(--u)*74)}
+.rbtn.target{right:calc(var(--u)*30);bottom:calc(var(--u)*-22)}
+
+/* bottom bar */
+.bottom-bar{position:absolute;left:calc(var(--u)*420);bottom:calc(var(--u)*28);width:calc(var(--u)*1175);height:calc(var(--u)*80);display:flex;gap:calc(var(--u)*18);align-items:center}
+.ticker{
+  flex:1; height:100%; background:#141519; border-radius:calc(var(--u)*14); overflow:hidden; display:flex; align-items:center;
+  box-shadow:inset 0 0 0 calc(var(--u)*4) #9aa3b6, 0 0 0 calc(var(--u)*5) var(--ink), inset 0 calc(var(--u)*-10) 0 #26272f;
+}
+.ticker-track{white-space:nowrap;font-family:'Press Start 2P',monospace;font-size:calc(var(--u)*33);color:#e8ebf4;letter-spacing:calc(var(--u)*5);animation:ticker var(--dur,60s) linear infinite;will-change:transform}
+.ticker-track b{color:#ff8577;font-weight:400}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.sound-btn{
+  width:calc(var(--u)*106);height:calc(var(--u)*76);border:0;padding:0;display:grid;place-items:center;
+  background:linear-gradient(#77db8d 0 58%,#3a9e55 58%); --b:calc(var(--u)*5);
+  box-shadow:0 calc(-1*var(--b)) 0 0 var(--ink),0 var(--b) 0 0 var(--ink),calc(-1*var(--b)) 0 0 0 var(--ink),var(--b) 0 0 0 var(--ink),inset 0 calc(var(--u)*5) 0 #b6f3c2;
+}
+.sound-btn svg{width:46%;height:auto}
+.sound-btn:active{transform:translateY(2px)}
+.sound-btn .waves{display:none}
+.sound-btn.on .waves{display:inline}
+.sound-btn.on .mute{display:none}
+
+/* chibi */
+.chibi{position:absolute;left:calc(var(--u)*-26);bottom:calc(var(--u)*-18);width:calc(var(--u)*134);z-index:20;background:none;border:0;padding:0;animation:idle 1.2s steps(2) infinite}
+.chibi canvas{width:100%}
+@keyframes idle{50%{transform:translateY(calc(var(--u)*-4))}}
+.speech{
+  position:absolute; z-index:40; left:calc(var(--u)*120); bottom:calc(var(--u)*150); width:max-content; max-width:min(340px, 70vw);
+  background:#fff; color:#1a1530; font-family:'Silkscreen',monospace; font-size:14px; line-height:1.25; padding:10px 12px;
+  box-shadow:0 -4px 0 0 var(--ink),0 4px 0 0 var(--ink),-4px 0 0 0 var(--ink),4px 0 0 0 var(--ink),6px 8px 0 0 rgba(0,0,0,.3);
+  opacity:0; transform:translateY(8px); transition:opacity .15s steps(2), transform .15s steps(2); pointer-events:none;
+}
+.speech.show{opacity:1;transform:none}
+.speech:after{content:"";position:absolute;left:-14px;bottom:10px;border:8px solid transparent;border-right-color:var(--ink)}
+
+/* hanging buttons */
+.hang-row{position:relative;z-index:6;width:var(--W);margin:calc(var(--u)*-4) auto 0;display:flex;justify-content:space-between;padding:0 calc(var(--u)*72)}
+.hang-row .pbtn{font-size:calc(var(--u)*31);min-width:calc(var(--u)*278);padding:calc(var(--u)*10) calc(var(--u)*26) calc(var(--u)*12);--b:calc(var(--u)*5)}
+
+/* footer */
+.footer{display:flex;justify-content:center;align-items:center;gap:calc(var(--u)*130);margin-top:calc(var(--u)*30)}
+.logo{text-align:center}
+.logo-kicker{font-size:calc(var(--u)*17);letter-spacing:.2em;color:#cfe0ff}
+.logo-main{
+  font-family:'Press Start 2P',monospace; font-size:calc(var(--u)*62); color:#e8352d; transform:skewX(-10deg); margin:calc(var(--u)*8) 0;
+  text-shadow:3px 0 0 #3a0c10,-3px 0 0 #3a0c10,0 3px 0 #3a0c10,0 -3px 0 #3a0c10,4px 6px 0 #0e1c4d;
+}
+.logo-sub{font-size:calc(var(--u)*24);color:#ffcf4a;letter-spacing:.12em;transform:skewX(-10deg)}
+.logo-date{font-family:'Press Start 2P',monospace;font-size:calc(var(--u)*24);color:#e8352d;margin-top:calc(var(--u)*8);text-shadow:2px 2px 0 #3a0c10}
+.powered{line-height:1.05}
+.pw-k{font-family:Arial,Helvetica,sans-serif;font-size:calc(var(--u)*24)}
+.pw-m{font-family:'Press Start 2P',monospace;font-size:calc(var(--u)*40);margin-top:calc(var(--u)*10);letter-spacing:.06em}
+.pw-s{font-family:'Silkscreen',monospace;font-size:calc(var(--u)*34);margin-top:calc(var(--u)*6)}
+.fine{text-align:center;font-family:'VT323',monospace;font-size:17px;color:#9fb6ec;margin:18px 16px 0;letter-spacing:.04em}
+
+/* toast */
+.toast{
+  position:absolute;left:50%;bottom:18px;transform:translate(-50%,20px);z-index:5;opacity:0;pointer-events:none;
+  background:var(--peach);color:#22150b;font-size:14px;padding:8px 14px;max-width:86%;text-align:center;
+  box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink);
+  transition:opacity .15s steps(2),transform .15s steps(2);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- panels / modals ---------- */
+.modal{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:16px;background:rgba(5,12,40,.66)}
+.modal[hidden]{display:none}
+.panel{
+  width:min(540px,100%); max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px); overflow:auto;
+  background:#12285c; color:#eaf3ff; animation:popin .2s steps(4);
+  box-shadow:0 -5px 0 0 var(--ink),0 5px 0 0 var(--ink),-5px 0 0 0 var(--ink),5px 0 0 0 var(--ink),inset 0 0 0 5px var(--bezel),inset 0 0 0 9px #1c3d7c,10px 12px 0 0 rgba(0,0,0,.35);
+}
+@keyframes popin{from{transform:scale(.85)}to{transform:none}}
+.panel-head{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;margin:9px 9px 0;background:linear-gradient(var(--peach) 0 62%,var(--peach-d) 62%);color:#1d120a}
+.tone-red .panel-head{background:linear-gradient(#ff7b6e 0 62%,var(--red-d) 62%);color:#fff}
+.tone-green .panel-head{background:linear-gradient(#71d088 0 62%,var(--green-d) 62%);color:#0b2012}
+.tone-blue .panel-head{background:linear-gradient(#8fcaf5 0 62%,var(--sky-d) 62%);color:#0c1a33}
+.panel-icon{width:50px;height:50px;flex:none}
+.panel-titles{flex:1;min-width:0}
+.kicker{font-size:12px;letter-spacing:.14em;opacity:.85}
+.ptitle{font-family:'Press Start 2P',monospace;font-size:clamp(13px,3.6vw,18px);line-height:1.35;margin-top:4px;word-wrap:break-word}
+.xbtn{background:var(--ink);color:#fff;border:0;width:34px;height:34px;font-family:'Press Start 2P';font-size:12px;flex:none}
+.panel-body{padding:14px 20px 8px;font-family:'VT323',monospace;font-size:23px;line-height:1.15}
+.panel-body p{margin:.4em 0 .7em}
+.panel-actions{display:flex;gap:14px;padding:8px 20px 22px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.chip{font-family:'Silkscreen';font-size:12px;padding:3px 8px;background:#24448a;color:#cfe3ff;letter-spacing:.08em}
+.chip.r{background:var(--red);color:#fff}.chip.g{background:var(--green);color:#08200f}.chip.b{background:var(--sky);color:#0b1a33}
+.quote{color:#fff;font-size:26px}
+.meta{color:#8fb2ea;font-size:19px}
+.stat{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:6px 0 10px}
+.stat dt{color:#8fb2ea}.stat dd{margin:0;color:#fff}
+.meter{height:16px;background:#0a1735;box-shadow:0 0 0 3px var(--ink);margin:6px 0 4px;position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--red) 0 10px,#ff8577 10px 14px)}
+.meter.over i{width:100%;animation:overload 1s steps(4) infinite}
+@keyframes overload{50%{filter:brightness(1.5)}}
+.sec{font-family:'Silkscreen';font-size:13px;letter-spacing:.16em;color:var(--peach);margin:14px 0 6px}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.list button{width:100%;text-align:left;background:#1c3d7c;border:0;padding:8px 10px;font-family:'VT323';font-size:22px;color:#fff;display:flex;justify-content:space-between;gap:10px}
+.list button:hover{background:#2a539f}
+.list button span{color:#9fc2f5}
+.chat-log{height:min(300px,42vh);overflow:auto;background:#0a1735;padding:10px;box-shadow:inset 0 0 0 3px var(--ink);display:flex;flex-direction:column;gap:8px}
+.msg{max-width:85%;padding:6px 10px;font-size:21px;line-height:1.1}
+.msg.hq{background:#1f4a9a;align-self:flex-start}
+.msg.me{background:var(--peach);color:#1d120a;align-self:flex-end}
+.msg.typing{opacity:.7}
+.chat-form{display:flex;gap:10px;margin-top:10px}
+.chat-form input{flex:1;min-width:0;background:#eaf3ff;border:0;box-shadow:inset 0 0 0 3px var(--ink);padding:8px 10px;font-family:'VT323';font-size:22px;color:#0b1a33}
+.reveal>*{opacity:0;animation:fadeup .5s steps(4) forwards}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.big-reveal{font-family:'Press Start 2P';font-size:clamp(18px,5vw,30px);color:#ff7b6e;text-align:center;line-height:1.5;margin:10px 0}
+.avatar{width:auto;float:right;margin:0 0 8px 12px}
+.cipher{font-family:'Press Start 2P',monospace;font-size:13px;line-height:2;letter-spacing:2px;color:#9fe8ff;background:#0a1735;box-shadow:inset 0 0 0 3px var(--ink);padding:12px 14px;margin:10px 0;word-break:break-word}
+.cipher-plain{font-family:'Press Start 2P',monospace;font-size:14px;line-height:2;color:var(--peach);margin:8px 0;animation:fadeup .6s steps(4)}
+.ticket+.ticket{margin-top:16px}
+@media (max-width:520px){.tk-main{font-size:11px;padding:12px}.tk-stub{width:76px;padding:12px 6px}.barcode{width:52px}.tk-row{flex-direction:column;gap:0;margin:6px 0}.tk-admit{font-size:18px}}
+@media (max-width:520px){.avatar{float:none;display:block;margin:0 auto 10px}}
+
+/* ticket */
+.ticket{display:flex;margin:8px 0 6px;filter:drop-shadow(6px 8px 0 rgba(0,0,0,.35))}
+.tk-main{flex:1;min-width:0;overflow-wrap:anywhere;background:var(--peach);color:#24160a;padding:14px 16px;font-family:'Silkscreen';font-size:13px;letter-spacing:.06em;position:relative}
+.tk-main:after{content:"";position:absolute;right:-6px;top:0;bottom:0;width:12px;background:radial-gradient(circle,#12285c 4px,transparent 5px) 0 0/12px 16px repeat-y}
+.tk-admit{font-family:'Press Start 2P';font-size:clamp(18px,5vw,26px);color:var(--red-d);margin:8px 0 10px}
+.tk-row{display:flex;gap:10px;margin:4px 0}.tk-row b{min-width:70px;color:#8a4a14;font-weight:400}
+.tk-stub{width:110px;background:var(--peach-d);color:#24160a;padding:14px 10px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;font-size:11px;text-align:center}
+.barcode{width:70px;height:80px;background:repeating-linear-gradient(90deg,#24160a 0 2px,transparent 2px 4px,#24160a 4px 7px,transparent 7px 9px,#24160a 9px 10px,transparent 10px 13px)}
+
+/* trailer */
+.trailer{position:fixed;inset:0;z-index:6000;background:#000;display:grid;place-items:center;padding:12vh 24px}
+.trailer[hidden]{display:none}
+.trailer:before,.trailer:after{content:"";position:absolute;left:0;right:0;height:11vh;background:#000;box-shadow:0 0 0 1px #222}
+.trailer:before{top:0}.trailer:after{bottom:0}
+.trailer-text{font-family:'Press Start 2P',monospace;font-size:clamp(14px,2.8vw,30px);line-height:1.8;text-align:center;color:#f2f2f2;white-space:pre-line;max-width:1100px}
+.tr-big{display:block;font-size:clamp(34px,9vw,96px);color:#e8352d;transform:skewX(-10deg);text-shadow:4px 0 #3a0c10,-4px 0 #3a0c10,0 4px #3a0c10,0 -4px #3a0c10,6px 9px 0 #1f3f9f;animation:fadeup .8s steps(6)}
+.tr-sub{display:block;font-family:'Silkscreen';font-size:clamp(14px,2.6vw,28px);color:#ffcf4a;margin-top:18px;letter-spacing:.14em}
+.trailer-skip{position:absolute;right:20px;bottom:calc(11vh + 14px);z-index:2;background:none;border:2px solid #555;color:#aaa;font-family:'Press Start 2P';font-size:11px;padding:8px 12px}
+
+/* boot */
+.boot{position:fixed;inset:0;z-index:8000;display:grid;place-items:center;padding:20px;background:var(--ocean);
+  background-image:linear-gradient(rgba(106,168,230,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(106,168,230,.08) 1px,transparent 1px);background-size:32px 32px;transition:opacity .5s steps(5)}
+.boot.gone{opacity:0;pointer-events:none}
+.boot-inner{width:min(620px,100%);text-align:center}
+.boot-inner canvas{width:112px;margin:0 auto 14px;animation:idle 1s steps(2) infinite}
+.boot-title{font-family:'Press Start 2P';font-size:clamp(20px,5vw,34px);color:#eef6ff;text-shadow:3px 3px 0 #2e63cf,6px 6px 0 var(--ink)}
+.boot-sub{margin-top:12px;color:var(--peach);letter-spacing:.3em;font-size:14px}
+.boot-log{text-align:left;font-family:'VT323';font-size:21px;color:#9ff5a8;min-height:9.5em;margin:22px 0 12px;white-space:pre-wrap}
+@media (max-height:560px){.boot{overflow:auto}.boot-inner canvas{width:56px;margin-bottom:6px}.boot-log{min-height:0;font-size:16px;margin:10px 0 8px}.boot-start{margin-top:14px}}
+.boot-bar{height:18px;box-shadow:0 0 0 3px #5b9bd3,0 0 0 6px var(--ink);background:#0a1530;position:relative;overflow:hidden}
+.boot-bar i{position:absolute;inset:0 auto 0 0;width:0;background:repeating-linear-gradient(90deg,var(--green) 0 12px,var(--green-l) 12px 16px)}
+.boot-start{margin-top:30px;font-size:20px;animation:blink 1s steps(1) infinite}
+.boot-start[hidden]{display:none}
+@keyframes blink{50%{opacity:.35}}
+
+.heart-fall{position:fixed;top:-60px;z-index:7000;pointer-events:none;animation:fall var(--d) linear var(--dl) forwards}
+@keyframes fall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
+.burst-wrap{background:none;border:0}
+
+/* ======================= FOLD MODE (phones) ======================= */
+@media (max-width:760px){
+  :root{--bezel:#57b2ea;--bezel-hi:#9ddcff;--bezel-lo:#3a8bd0}
+  .fold-only{display:block}
+  .desk-only{display:none!important}
+  .app{padding:10px 0 24px}
+  .device{
+    width:calc(100vw - 16px); padding:12px 10px 12px 50px; --b:5px;
+    box-shadow:0 -5px 0 0 var(--ink),0 5px 0 0 var(--ink),-5px 0 0 0 var(--ink),5px 0 0 0 var(--ink),inset 0 5px 0 0 var(--bezel-hi),inset 5px 0 0 0 var(--bezel-hi),inset 0 -7px 0 0 var(--bezel-lo),inset -7px 0 0 0 var(--bezel-lo);
+  }
+  .screen{aspect-ratio:auto;height:56vh;height:56svh;max-height:none;box-shadow:0 0 0 3px #1c3d7c,0 0 0 6px var(--ink)}
+  .hud .ruler-left,.hud-corner{display:none}
+  .ruler-top{top:44px;left:120px;right:110px}
+  .ruler-top i{height:10px;border-width:2px;width:14%}
+  .ruler-top i:nth-child(n+5){display:none}
+  .fold-label{position:absolute;left:8px;top:8px;display:flex;gap:6px;align-items:center;color:#9fd2ff}
+  .fold-label .ring{width:30px;height:30px;border:2px solid #9fd2ff;border-radius:50%;position:relative}
+  .fold-label .ring:after{content:"";position:absolute;inset:6px;border:2px solid #9fd2ff;transform:rotate(45deg)}
+  .fold-label b{display:block;font-family:'Press Start 2P';font-size:11px;font-weight:400}
+  .fold-label small{display:block;font-size:7px;letter-spacing:.08em;margin-top:3px}
+  .corner-tr{right:2px;top:-2px;width:62px}
+  .corner-tr .whitey{display:none}.corner-tr .peachy{display:block}
+  .banner{top:150px;width:206px}
+  .leaflet-control-attribution{font-size:8px!important;line-height:1.4!important;max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .banner-box{font-size:12px;letter-spacing:2px;padding:12px 8px 9px;--b:3px;
+    background:linear-gradient(#ffd0bd 0%,var(--salmon) 45%,var(--salmon-d) 100%);
+    box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 0 #ffe5da,4px 5px 0 0 rgba(0,0,0,.3)}
+  .banner-top{gap:4px;margin-bottom:-6px}
+  .banner-top canvas{width:46px}
+  .fingers{gap:6px}.fingers span{gap:2px}
+  .fingers i{width:9px;height:17px;border-width:2px;border-radius:3px}
+  .radar-wrap{width:96px;right:10px;bottom:26px}
+  .rbtn{width:28px;border-width:2px}
+  .rbtn.globe{right:-10px;top:40px}.rbtn.target{right:16px;bottom:-12px}
+  .lcd-pack{position:absolute;right:8px;top:62px;z-index:4;width:132px}
+  .lcd-frame{padding:5px;background:repeating-linear-gradient(-45deg,#f6d36a 0 6px,#5d86b6 6px 12px);box-shadow:0 0 0 3px var(--ink)}
+  .lcd{background:#1f5326;color:#86f58a;font-family:'VT323';font-size:20px;text-align:center;padding:2px 0;letter-spacing:1px;box-shadow:inset 0 0 0 2px #0c2a10;text-shadow:0 0 6px rgba(134,245,138,.6)}
+  .lid{margin-top:6px;background:#4f80b8;box-shadow:0 0 0 3px var(--ink),inset 0 3px 0 #7fb0e6;height:44px;display:flex;align-items:center;justify-content:center;position:relative}
+  .lid i{position:absolute;width:8px;height:8px;border-radius:50%;background:#c9dcf2;box-shadow:0 0 0 2px var(--ink)}
+  .lid i:nth-child(1){left:6px;top:6px}.lid i:nth-child(2){left:6px;bottom:6px}.lid i:nth-child(4){right:6px;top:6px}.lid i:nth-child(5){right:6px;bottom:6px}
+  .lid canvas{width:40px}
+  .lid span{position:absolute;font-family:'Press Start 2P';font-size:11px;color:#6dfc78;text-shadow:1px 1px 0 var(--ink);margin-top:2px}
+  .ost{position:absolute;left:6px;top:36%;display:flex;flex-direction:column;gap:8px;z-index:12}
+  .ost button{
+    width:36px;height:38px;border:0;padding:0;font-family:'Press Start 2P';font-size:15px;color:#3a0d0a;
+    background:linear-gradient(#ffb3a6 0 60%,#f07a68 60%);
+    box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 #ffd9d2;
+  }
+  .ost.on button{animation:eq .5s steps(2) infinite}
+  .ost.on button:nth-child(2){animation-delay:.16s}.ost.on button:nth-child(3){animation-delay:.33s}
+  @keyframes eq{50%{transform:translateX(3px);filter:brightness(1.15)}}
+  .fold-deck{display:grid;grid-template-columns:22px 1fr;gap:8px;margin-top:14px;align-items:end}
+  .pod{display:flex;flex-direction:column;align-items:center;gap:6px;width:66px;margin-left:-44px}
+  .tomato,.bubble{background:none;border:0;padding:0}
+  .tomato canvas{width:52px}
+  .bubble{width:64px;height:82px;border-radius:40% 40% 46% 46%;display:grid;place-items:end center;padding-bottom:6px;
+    background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.6),rgba(150,215,255,.25) 35%,rgba(60,140,220,.35));box-shadow:0 0 0 3px #1b3a78,inset 0 -6px 0 rgba(30,70,140,.3)}
+  .bubble canvas{width:44px;animation:idle 1.2s steps(2) infinite}
+  .deck{display:grid;grid-template-columns:30px 1fr 1fr 1fr;gap:9px 7px;align-items:center}
+  .db{--c1:var(--peach);--c2:var(--peach-d);--hi:var(--peach-l);border:0;font-family:'Silkscreen';font-size:11px;line-height:1.05;color:#24160a;padding:7px 2px 8px;min-height:38px;letter-spacing:0;
+    background:linear-gradient(var(--c1) 0 60%,var(--c2) 60%);
+    box-shadow:0 -3px 0 0 var(--ink),0 3px 0 0 var(--ink),-3px 0 0 0 var(--ink),3px 0 0 0 var(--ink),inset 0 3px 0 var(--hi)}
+  .db:active{transform:translateY(2px)}
+  .db.g{--c1:#7bdc90;--c2:#3d9f57;--hi:#c2f6cc;color:#0c2213}
+  .db.r{--c1:#ff8d80;--c2:#c63a30;--hi:#ffc3bc;color:#2c0705}
+  .db.off{--c1:#86a9c8;--c2:#5f86ab;--hi:#a6c4de;color:#3b5a7a}
+  .db.sm{padding:7px 0 8px;font-size:10px}
+  .db.lit{outline:3px solid #fff;outline-offset:2px}
+  .hang-row{width:calc(100vw - 16px);margin-top:16px;padding:0 6px;gap:14px}
+  .hang-row .pbtn{font-size:14px;min-width:0;flex:1;padding:9px 6px 11px;--b:4px}
+  .footer{flex-direction:column;gap:18px;margin-top:26px}
+  .logo-kicker{font-size:11px}.logo-main{font-size:30px}.logo-sub{font-size:12px}.logo-date{font-size:12px}
+  .pw-k{font-size:13px;text-align:center}.pw-m{font-size:20px;text-align:center}.pw-s{font-size:16px;text-align:center}
+  .toast{bottom:auto;top:10px;transform:translate(-50%,-20px);font-size:12px}
+  .toast.show{transform:translate(-50%,0)}
+  .speech{position:fixed;left:16px;right:16px;bottom:24px;max-width:none}
+  .speech:after{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important}
+  .ticker-track{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div class="boot" id="boot">
+  <div class="boot-inner">
+    <canvas id="bootHead" class="sprite"></canvas>
+    <div class="boot-title">SPIDEY TRACKER</div>
+    <div class="boot-sub" id="bootSub">MADELINE EDITION</div>
+    <pre class="boot-log" id="bootLog"></pre>
+    <div class="boot-bar"><i id="bootFill"></i></div>
+    <button class="pbtn boot-start" id="startBtn" hidden>PRESS START</button>
+  </div>
+</div>
+
+<main class="app">
+  <div class="device" id="device">
+    <div class="title-plate desk-only" aria-label="Spidey Tracker">
+      <span class="t">SPIDEY</span><canvas id="titleHead" class="sprite"></canvas><span class="t">TRACKER</span>
+    </div>
+
+    <button class="corner corner-tl desk-only" data-act="prof1" aria-label="Agent file"><canvas id="eyesBadge" class="sprite"></canvas></button>
+    <button class="corner corner-tr" data-act="sense" aria-label="Spider-sense"><canvas id="senseWhite" class="sprite whitey"></canvas><canvas id="sensePeach" class="sprite peachy"></canvas></button>
+
+    <div class="side-tabs desk-only">
+      <button class="tab on" id="tabGreen" data-act="filterGreen" aria-label="Show explored sightings"><canvas class="sprite"></canvas></button>
+      <button class="tab on" id="tabRed" data-act="filterRed" aria-label="Show unexplored sightings"><canvas class="sprite"></canvas></button>
+    </div>
+
+    <div class="ost fold-only" id="ost">
+      <button data-act="music" aria-label="Soundtrack">O</button>
+      <button data-act="music" aria-label="Soundtrack">S</button>
+      <button data-act="music" aria-label="Soundtrack">T</button>
+    </div>
+
+    <div class="screen" id="screen">
+      <div id="map"></div>
+      <div class="hud" aria-hidden="true">
+        <div class="hud-corner"></div>
+        <div class="ruler-top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ruler-left"><i></i><i></i><i></i></div>
+        <div class="fold-label fold-only" style="display:none"><span class="ring"></span><div><b>SMT_1</b><small>SPIDEY TRACK MARK 1</small></div></div>
+      </div>
+
+      <div class="lcd-pack fold-only">
+        <div class="lcd-frame"><div class="lcd" id="lcd">0x00000000</div></div>
+        <div class="lid"><i></i><i></i><canvas id="heartCanvas" class="sprite"></canvas><i></i><i></i><span id="heartNum">4</span></div>
+      </div>
+
+      <div class="banner" id="banner" data-act="sense" title="Spider-sense">
+        <div class="banner-top">
+          <div class="fingers"><span><i></i><i></i></span><span><i></i><i></i></span></div>
+          <canvas id="bannerHead" class="sprite"></canvas>
+          <div class="fingers"><span><i></i><i></i></span><span><i></i><i></i></span></div>
+        </div>
+        <div class="banner-box" id="bannerText">SCANNING<br>...</div>
+      </div>
+
+      <div class="radar-wrap">
+        <canvas id="radar"></canvas>
+        <button class="rbtn globe" data-act="world" aria-label="World view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0c1533" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>
+        </button>
+        <button class="rbtn target" data-act="center" aria-label="Find me">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0c1533" stroke-width="2.4"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="#0c1533"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/></svg>
+        </button>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="bottom-bar desk-only">
+      <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
+      <button class="sound-btn" id="soundBtn" data-act="music" aria-label="Toggle soundtrack">
+        <svg viewBox="0 0 24 20" fill="#0c1533"><path d="M2 7h4l6-5v16l-6-5H2z"/><g class="waves" fill="none" stroke="#0c1533" stroke-width="2.2"><path d="M15 6.5c1.6 2 1.6 5 0 7"/><path d="M18 4c3 3.3 3 8.7 0 12"/></g><g class="mute" stroke="#0c1533" stroke-width="2.4"><path d="M15 6l7 8M22 6l-7 8"/></g></svg>
+      </button>
+    </div>
+
+    <div class="fold-deck fold-only">
+      <div class="pod">
+        <button class="tomato" data-act="talk" aria-label="Spidey"><canvas id="tomatoCanvas" class="sprite"></canvas></button>
+        <button class="bubble" data-act="talk" aria-label="Spidey says hi"><canvas id="podCanvas" class="sprite"></canvas></button>
+      </div>
+      <div class="deck">
+        <button class="db g sm lit" data-act="a1">A.1</button>
+        <button class="db g" data-act="prof1">PROF&nbsp;1</button>
+        <button class="db" data-act="terrain">TERRAIN</button>
+        <button class="db" data-act="chat">CHAT</button>
+        <button class="db r sm" data-act="a2">A.2</button>
+        <button class="db g" data-act="prof2">PROF&nbsp;2</button>
+        <button class="db off" data-act="3d">3D&nbsp;VIEW</button>
+        <button class="db" data-act="archive">ARCHIVE</button>
+        <span></span>
+        <button class="db g" data-act="prof3">PROF&nbsp;3</button>
+        <button class="db" data-act="center">CENTER LOC</button>
+        <button class="db" data-act="share">SHARE</button>
+      </div>
+    </div>
+
+    <button class="chibi desk-only" data-act="talk" aria-label="Spidey"><canvas id="chibiCanvas" class="sprite"></canvas></button>
+    <div class="speech" id="speech"></div>
+  </div>
+
+  <div class="hang-row">
+    <button class="pbtn" data-act="trailer">WATCH TRAILER</button>
+    <button class="pbtn" data-act="tickets">GET TICKETS</button>
+  </div>
+
+  <footer class="footer">
+    <div class="logo">
+      <div class="logo-kicker">OUR FIRST MOVIE</div>
+      <div class="logo-main" id="logoName">MADELINE</div>
+      <div class="logo-sub">SPIDER-MAN: BRAND NEW DAY</div>
+      <div class="logo-date" id="logoDate">EST. 2026</div>
+    </div>
+    <div class="powered">
+      <div class="pw-k">Powered by</div>
+      <div class="pw-m">POPCORN</div>
+      <div class="pw-s">+ <span id="pwMe">YOUR PERSON</span></div>
+    </div>
+  </footer>
+  <p class="fine">fan-made with love &middot; not affiliated with Marvel, Sony or anyone official &middot; map &copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors</p>
+</main>
+
+<div class="modal" id="modal" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+<div class="trailer" id="trailer" hidden><div class="trailer-text" id="trailerText"></div><button class="trailer-skip" id="trailerSkip">SKIP &gt;</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ================================================================
+   helpers
+   ================================================================ */
+const $ = s => document.querySelector(s);
+const HER = (CONFIG.herName || 'MADELINE').toUpperCase();
+const ME  = (CONFIG.yourName || 'YOUR PERSON').toUpperCase();
+const sub = s => String(s).replace(/\{HER\}/g, HER).replace(/\{ME\}/g, ME).replace(/\{MOVIE\}/g, CONFIG.firstMovie);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hex = (n, w) => n.toString(16).toUpperCase().padStart(w, '0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('spideyTracker.' + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('spideyTracker.' + k, JSON.stringify(v)); }catch(e){} }
+};
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function km(a, b){ const R = 6371, r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  const h = Math.sin(dLat/2)**2 + Math.cos(a.lat*r) * Math.cos(b.lat*r) * Math.sin(dLng/2)**2; return 2 * R * Math.asin(Math.sqrt(h)); }
+const fmtKm = d => d < 1 ? Math.round(d * 1000) + ' M' : Math.round(d).toLocaleString('en') + ' KM';
+const isFold = () => matchMedia('(max-width: 760px)').matches;
+
+/* ================================================================
+   pixel-art engine — every sprite is drawn from these grids
+   ================================================================ */
+const norm = g => { const w = Math.max(...g.map(r => r.length)); return g.map(r => r.padEnd(w, '.')); };
+function outline(grid, ch = 'O'){
+  grid = norm(grid); const h = grid.length, w = grid[0].length, out = [];
+  const at = (x, y) => (grid[y] || '')[x];
+  for (let y = -1; y <= h; y++){ let row = '';
+    for (let x = -1; x <= w; x++){ const v = at(x, y);
+      if (v && v !== '.'){ row += v; continue; }
+      const n = [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => { const t = at(x+dx, y+dy); return t && t !== '.'; });
+      row += n ? ch : '.'; }
+    out.push(row); }
+  return out;
+}
+function paint(canvas, grid, pal, s = 1){
+  grid = norm(grid); canvas.width = grid[0].length * s; canvas.height = grid.length * s;
+  canvas.dataset.gw = grid[0].length;
+  const g = canvas.getContext('2d'); g.clearRect(0, 0, canvas.width, canvas.height);
+  grid.forEach((row, y) => { for (let x = 0; x < row.length; x++){ const c = pal[row[x]]; if (!c) continue; g.fillStyle = c; g.fillRect(x*s, y*s, s, s); } });
+  return canvas;
+}
+const mk = () => document.createElement('canvas');
+// round a CSS size so a sprite `gw` art-pixels wide gets a whole number of device pixels per art-pixel
+const snapPx = (target, gw) => { const d = devicePixelRatio || 1; return Math.max(1, Math.round(target * d / gw)) * gw / d; };
+// uneven pixel scaling is what makes pixel art look lopsided, so every sprite canvas gets snapped
+function snapSprites(){
+  document.querySelectorAll('canvas.sprite').forEach(c => {
+    const gw = +c.dataset.gw; if (!gw) return;
+    c.style.width = ''; const w = c.getBoundingClientRect().width; if (!w) return;
+    c.style.width = snapPx(w, gw) + 'px';
+  });
+}
+
+const SPIDER = [
+  "K..K.....K..K",
+  ".K..K...K..K.",
+  "..K..KKK..K..",
+  "...KKKKKKK...",
+  "KK..KKKKK..KK",
+  "..KKKKKKKKK..",
+  "....KKKKK....",
+  "..KKKKKKKKK..",
+  "KK..KKKKK..KK",
+  "...K.KKK.K...",
+  "..K..KKK..K..",
+  ".K....K....K.",
+  "K...........K"];
+const STAR = [
+  ".....K.....",
+  "....KKK....",
+  "....KKK....",
+  "KKKKKKKKKKK",
+  ".KKKKKKKKK.",
+  "..KKKKKKK..",
+  "...KKKKK...",
+  "..KKKKKKK..",
+  "..KKK.KKK..",
+  ".KK.....KK.",
+  ".K.......K."];
+// every emblem has odd width AND height, and every badge is odd-sized, so emblems land dead centre
+const HEART = [
+  ".HH...HH.",
+  "HHHH.HHHH",
+  "HHHHHHHHH",
+  "HHHHHHHHH",
+  "HHHHHHHHH",
+  ".HHHHHHH.",
+  "..HHHHH..",
+  "...HHH...",
+  "....H...."];
+const EYES = [
+  ".WWWW...WWWW.",
+  "WWWWWW.WWWWWW",
+  "WWWWWW.WWWWWW",
+  "WWWWWW.WWWWWW",
+  ".WWWWW.WWWWW.",
+  "..WWWW.WWWW..",
+  "...WW...WW..."];
+const DOT = ["..BBB..",".BBBBB.","BBWBBBB","BBBBBBB","BBBBBBB",".BBBBB.","..BBB.."];
+// Spidey head — transcribed from the supplied reference icon (has its own outline)
+const HEAD = [
+  ".....KKKK.....",
+  "...KKRRRRKK...",
+  "..KRRRRRRRRK..",
+  ".KRRRRRRRRRRK.",
+  "KRKKKRRRRKKKRK",
+  "KKWWWKRRKWWWKK",
+  "KWWWWWKKWWWWWK",
+  "KWWWWWKKWWWWWK",
+  "KWWWWWKKWWWWWK",
+  "KWWWWWKKWWWWWK",
+  "KKWWWKRRKWWWKK",
+  "KRKKKRRRRKKKRK",
+  ".KRRRRRRRRRRK.",
+  "..KRRRRRRRRK..",
+  "...KKRRRRKK...",
+  ".....KKKK....."];
+// body is written as its left half and mirrored, so it's exactly symmetric under the 14-wide head
+const mirror = h => h + [...h].reverse().join('');
+const BODY = [
+  "....RRR",
+  "..BBRRR",
+  ".BBBRRK",
+  ".BBRRKK",
+  "RRBBRRK",
+  "RR.BBRR",
+  "RR.BBBB",
+  "DD.BBBB",
+  "...BBBR",
+  "...BBB.",
+  "...RRR.",
+  "...RRR.",
+  "..RRRR.",
+  "..DDDD."].map(mirror);
+const blinkHead = HEAD.map((r, y) => [5, 6, 9, 10].includes(y) ? r.replace(/W/g, 'K') : r);
+// paste `top` over `base` at (ox, oy); the grid grows in any direction it needs to
+function overlay(base, top, ox, oy){
+  base = norm(base); top = norm(top);
+  const up = Math.max(0, -oy), w = Math.max(base[0].length, ox + top[0].length);
+  const rows = Array(up).fill('.'.repeat(w)).concat(base.map(r => r.padEnd(w, '.')));
+  top.forEach((tr, y) => { const ry = y + oy + up;
+    while (rows.length <= ry) rows.push('.'.repeat(w));
+    const r = rows[ry].split('');
+    for (let x = 0; x < tr.length; x++) if (tr[x] !== '.') r[ox + x] = tr[x]; rows[ry] = r.join(''); });
+  return rows;
+}
+const LEAF_HEAD = overlay(HEAD, outline(["..GG", "GGGG", "GG.."]), 8, -3);
+// Madeline's agent avatar: the same mask with her two signature braids
+const BRAID = [".O.", "OhO", "OHO", "OhO", "OHO", "OhO", "OPO", "OhO", ".O."];
+const BRAID_HEAD = [BRAID, BRAID].reduce((g, b, i) => overlay(g, b, i ? 15 : 0, 7), HEAD.map(r => '..' + r + '..'));
+const chibi = head => head.map(r => '.' + r + '.').concat(outline(BODY));
+
+const PAL = { R:'#eb5a4d', D:'#9e2722', W:'#e8e8dc', K:'#1d1b16', B:'#2f5fd0', O:'#1d1b16', P:'#ff6fae', G:'#4fbf63', h:'#4a3326', H:'#6b4a36' };
+const PAL_PINK = Object.assign({}, PAL, { R:'#ff7fb1', D:'#d14a86' });
+
+/* badge = shape mask + pixel layers (outline / rim / ring / fill) + emblem */
+const SHAPES = {
+  oct: (x, y, w, h) => { const dx = Math.abs(x - (w-1)/2), dy = Math.abs(y - (h-1)/2); return dx + dy <= w * 0.71; },
+  sq:  (x, y, w, h) => Math.min(x, w-1-x) + Math.min(y, h-1-y) >= 3,
+  // box from x=0..w-9 with an arrow on the right; the box's centre is (w-9)/2
+  tab: (x, y, w, h) => { const dy = Math.abs(y - (h-1)/2); return x >= dy - 7.5 && x <= (w - 9) + ((h-1)/2 - dy) * 0.75; },
+  circ:(x, y, w, h) => { const dx = x - (w-1)/2, dy = y - (h-1)/2; return dx*dx + dy*dy <= (w/2) * (w/2) + 1; }
+};
+function badge(o){
+  const { shape = 'oct', w = 25, h = w, s = 2, ink = '#120d18' } = o;
+  const inside = (x, y) => x >= 0 && y >= 0 && x < w && y < h && SHAPES[shape](x, y, w, h);
+  const d = Array.from({ length: h }, () => Array(w).fill(-1)), q = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){
+    if (!inside(x, y)) continue;
+    let edge = false;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (!inside(x+i, y+j)) edge = true;
+    if (edge){ d[y][x] = 0; q.push([x, y]); }
+  }
+  for (let k = 0; k < q.length; k++){ const [x, y] = q[k];
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++){
+      const nx = x+i, ny = y+j; if (inside(nx, ny) && d[ny][nx] < 0){ d[ny][nx] = d[y][x] + 1; q.push([nx, ny]); } } }
+  const c = mk(); c.width = w * s; c.height = h * s; c.dataset.gw = w; const g = c.getContext('2d');
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){
+    const L = d[y][x]; if (L < 0) continue; let col;
+    if (L === 0) col = ink;
+    else if (L <= (o.rimW || 2)){ const t = (x + y) / (w + h); col = t < .38 ? o.rimL : t > .62 ? o.rimD : o.rim; }
+    else if (L === (o.rimW || 2) + 1) col = o.ring;
+    else col = o.fill;
+    g.fillStyle = col; g.fillRect(x*s, y*s, s, s);
+  }
+  if (o.emblem){
+    const e = norm(o.emblem), ox = Math.floor((w - e[0].length) / 2) + (o.ex || 0), oy = Math.floor((h - e.length) / 2) + (o.ey || 0);
+    e.forEach((row, y) => { for (let x = 0; x < row.length; x++){ const col = (o.ePal || {})[row[x]]; if (!col) continue; g.fillStyle = col; g.fillRect((ox+x)*s, (oy+y)*s, s, s); } });
+  }
+  return c;
+}
+const COLORS = {
+  red:   { fill:'#e2483f', rim:'#ff7a6c', rimL:'#ffa596', rimD:'#c2372f', ring:'#99231d' },
+  green: { fill:'#4fae67', rim:'#77d48c', rimL:'#a8ecb6', rimD:'#3b9254', ring:'#2a6f3f' },
+  blue:  { fill:'#6bb3e6', rim:'#98cff4', rimL:'#c9e8ff', rimD:'#4e93cc', ring:'#2f6aa3' },
+  pink:  { fill:'#ff6fae', rim:'#ff9cc8', rimL:'#ffc6df', rimD:'#df4f90', ring:'#b13470' },
+  me:    { fill:'#fff3cf', rim:'#ffc94d', rimL:'#ffe08f', rimD:'#e7a52c', ring:'#d98a1e' }
+};
+const K = { K:'#120d18' };
+const SPR = {
+  red:   badge({ ...COLORS.red,   emblem: SPIDER, ePal: K }),
+  green: badge({ ...COLORS.green, emblem: SPIDER, ePal: K }),
+  star:  badge({ ...COLORS.blue,  emblem: STAR, ePal: K }),
+  heart: badge({ ...COLORS.pink,  emblem: HEART, ePal: { H:'#fff' } }),
+  me:    badge({ ...COLORS.me, shape:'circ', emblem: DOT, ePal: { B:'#2f74e0', W:'#cfe6ff' } })
+};
+const URL_ = Object.fromEntries(Object.entries(SPR).map(([k, c]) => [k, c.toDataURL()]));
+const heartSprite = paint(mk(), outline(HEART, 'O'), { H:'#ff5a8f', O:'#3a0c1c' }, 4).toDataURL();
+
+function drawStaticSprites(){
+  paint($('#titleHead'),  HEAD, PAL, 4);
+  paint($('#bannerHead'), HEAD, PAL, 4);
+  paint($('#bootHead'),   HEAD, PAL, 4);
+  paint($('#tomatoCanvas'), LEAF_HEAD, PAL, 3);
+  paint($('#chibiCanvas'), chibi(HEAD), PAL, 4);
+  paint($('#podCanvas'),   chibi(HEAD), PAL, 3);
+  const eyes = badge({ fill:'#17151d', rim:'#f2a03d', rimL:'#ffc978', rimD:'#c87421', ring:'#17151d', w:27, rimW:3, emblem: EYES, ePal:{ W:'#f4f6ff' }, s:4 });
+  $('#eyesBadge').replaceWith(Object.assign(eyes, { id:'eyesBadge', className:'sprite' }));
+  const white = badge({ shape:'sq', w:21, s:5, fill:'#f6f6fa', rim:'#ffffff', rimL:'#ffffff', rimD:'#c9cbd8', ring:'#e3e4ee', emblem: SPIDER, ePal: K });
+  $('#senseWhite').replaceWith(Object.assign(white, { id:'senseWhite', className:'sprite whitey' }));
+  const peach = badge({ w:23, s:3, fill:'#fcd394', rim:'#fff0c8', rimL:'#ffffff', rimD:'#ec9d57', ring:'#d98a3e', emblem: SPIDER, ePal: K });
+  $('#sensePeach').replaceWith(Object.assign(peach, { id:'sensePeach', className:'sprite peachy' }));
+  // tab box spans x=0..20 (centre 10); spider is 13 wide so it needs ox=4: floor((29-13)/2) - 4
+  const tabG = badge({ shape:'tab', w:29, h:23, s:4, ...COLORS.green, emblem: SPIDER, ePal: K, ex:-4 });
+  const tabR = badge({ shape:'tab', w:29, h:23, s:4, ...COLORS.red,   emblem: SPIDER, ePal: K, ex:-4 });
+  $('#tabGreen canvas').replaceWith(Object.assign(tabG, { className:'sprite' }));
+  $('#tabRed canvas').replaceWith(Object.assign(tabR, { className:'sprite' }));
+  paint($('#heartCanvas'), outline(HEART.map(r => r.replace(/H/g, 'R'))), { R:'#e2483f', O:'#0b0f1d' }, 4);
+}
+drawStaticSprites();
+
+/* ================================================================
+   sound — tiny WebAudio chiptune engine (original tune)
+   ================================================================ */
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const Sound = {
+  ctx: null, playing: false, step: 0, next: 0, timer: null,
+  init(){
+    if (this.ctx) return; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const c = this.ctx = new AC();
+    this.master = c.createGain(); this.master.gain.value = .55; this.master.connect(c.destination);
+    this.mus = c.createGain(); this.mus.gain.value = .2; this.mus.connect(this.master);
+    this.sfx = c.createGain(); this.sfx.gain.value = .32; this.sfx.connect(this.master);
+    const b = c.createBuffer(1, c.sampleRate, c.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.noiseBuf = b;
+  },
+  tone(f, t, dur, type = 'square', vol = .3, dest = this.sfx, slide){
+    if (!this.ctx) return; const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + .03);
+  },
+  noise(t, dur, vol, hp = 6000, dest = this.mus){
+    if (!this.ctx) return; const c = this.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.noiseBuf; f.type = 'highpass'; f.frequency.value = hp;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(dest); s.start(t); s.stop(t + dur + .02);
+  },
+  now(){ return this.ctx ? this.ctx.currentTime + .01 : 0; },
+  blip(){ this.tone(880, this.now(), .07, 'square', .25); },
+  coin(){ const t = this.now(); this.tone(988, t, .08, 'square', .3); this.tone(1319, t + .08, .32, 'square', .3); },
+  alarm(){ const t = this.now(); for (let i = 0; i < 6; i++) this.tone(i % 2 ? 660 : 990, t + i * .11, .1, 'square', .22); },
+  boom(){ const t = this.now(); this.tone(120, t, 1.3, 'sawtooth', .35, this.sfx, 38); this.noise(t, .9, .35, 200, this.sfx); },
+  fanfare(){ const t = this.now(); [72, 76, 79, 84, 79, 84].forEach((n, i) => this.tone(mtof(n), t + i * .11, i === 5 ? .6 : .12, 'square', .25)); },
+  start(){ const t = this.now(); [60, 64, 67, 72, 76].forEach((n, i) => this.tone(mtof(n), t + i * .07, .12, 'square', .22)); },
+  // 8 bars of eighth notes. 0 = rest.
+  LEAD: [69,0,72,69,76,0,74,72, 74,0,71,67,69,0,0,0, 69,0,72,69,77,0,76,74, 76,74,72,71,72,0,0,0,
+         81,0,79,0,77,0,76,74, 76,0,74,0,72,0,71,0, 72,74,76,0,77,76,74,72, 71,0,67,71,69,0,0,0],
+  BASS: [45,43,41,48, 41,48,41,40],
+  playStep(i, t){
+    const S = 60 / 148 / 2, n = this.LEAD[i];
+    if (n) this.tone(mtof(n), t, S * .92, 'square', .16, this.mus);
+    if (n && i % 4 === 0) this.tone(mtof(n + 12), t + S * .5, S * .4, 'square', .05, this.mus);
+    this.tone(mtof(this.BASS[i >> 3] + (i % 2 ? 12 : 0)), t, S * .8, 'triangle', .42, this.mus);
+    if (i % 4 === 0) this.tone(150, t, .14, 'sine', .55, this.mus, 42);
+    if (i % 8 === 4) this.noise(t, .12, .16, 1800);
+    this.noise(t, .04, i % 2 ? .06 : .03);
+  },
+  startMusic(){
+    this.init(); if (!this.ctx || this.playing) return; this.ctx.resume && this.ctx.resume();
+    this.playing = true; this.next = this.ctx.currentTime + .08;
+    const S = 60 / 148 / 2;
+    this.timer = setInterval(() => {
+      while (this.next < this.ctx.currentTime + .15){ this.playStep(this.step, this.next); this.step = (this.step + 1) % this.LEAD.length; this.next += S; }
+    }, 25);
+    syncSoundUI();
+  },
+  stopMusic(){ this.playing = false; clearInterval(this.timer); syncSoundUI(); },
+  toggle(){ this.playing ? this.stopMusic() : this.startMusic(); store.set('music', this.playing); }
+};
+function syncSoundUI(){ $('#soundBtn').classList.toggle('on', Sound.playing); $('#ost').classList.toggle('on', Sound.playing); }
+
+/* ================================================================
+   sightings data
+   ================================================================ */
+const WORLD = [
+  [40.7282,-73.7949,'QUEENS, NEW YORK','Spotted eating a hot dog upside down outside a deli. Paid in exact change.'],
+  [40.7549,-73.9840,'MIDTOWN, NEW YORK','Swung past the library at 3:14am. Returned an overdue book.'],
+  [40.7061,-73.9969,'BROOKLYN BRIDGE','Hung a "NO PARKING" sign back up after a pigeon knocked it down.'],
+  [40.7580,-73.9855,'TIMES SQUARE','Photobombed 41 tourist selfies in one hour. A new personal record.'],
+  [40.7829,-73.9654,'CENTRAL PARK','Rescued a kite from a tree. Kept a bit of the string as a souvenir.'],
+  [34.0522,-118.2437,'LOS ANGELES','Stuck in traffic. Even Spidey can\'t swing over the 405.'],
+  [37.7749,-122.4194,'SAN FRANCISCO','Clung to the Golden Gate for "one quick photo". Stayed three hours. Foggy.'],
+  [47.6062,-122.3321,'SEATTLE','Seventh coffee of the day. Spider-sense now humming at an audible frequency.'],
+  [41.8781,-87.6298,'CHICAGO','Saw his reflection in the giant Bean. Waved at himself for a while.'],
+  [19.4326,-99.1332,'MEXICO CITY','Ate eleven tacos al pastor. The avocados were NOT rocks. Mask partially lifted. Chin confirmed.'],
+  [43.6532,-79.3832,'TORONTO','Apologised to a lamppost after swinging into it.'],
+  [49.2827,-123.1207,'VANCOUVER','Out in the rain. Sticky fingers noticeably less sticky. Concerning.'],
+  [25.7617,-80.1918,'MIAMI','Suit far too hot. Seen fanning himself with a newspaper.'],
+  [21.3069,-157.8583,'HONOLULU','Went surfing. Stuck to the board, which is apparently cheating.'],
+  [61.2181,-149.9003,'ANCHORAGE','Nobody saw anything. Suspiciously quiet. Possibly a moose.'],
+  [4.7110,-74.0721,'BOGOTA','Hiked up Monserrate the long way: vertically.'],
+  [-12.0464,-77.0428,'LIMA','Asked for ceviche "with extra web". Chef declined.'],
+  [-22.9068,-43.1729,'RIO DE JANEIRO','Struck a dramatic pose on top of Sugarloaf. Wrong movie.'],
+  [-34.6037,-58.3816,'BUENOS AIRES','Tried to tango. Kept sticking to his partner.'],
+  [-33.4489,-70.6693,'SANTIAGO','Climbed part of the Andes. Said the view was fine. Has seen better from Signal Hill.'],
+  [51.5072,-0.1276,'LONDON','Clung to Big Ben during the 6pm chime. Ears still ringing.'],
+  [48.8566,2.3522,'PARIS','Ordered a croissant in very confident, very wrong French.'],
+  [40.4168,-3.7038,'MADRID','Took a siesta in a web hammock above a plaza.'],
+  [38.7223,-9.1393,'LISBON','Chased a tram up a hill. The tram won.'],
+  [41.9028,12.4964,'ROME','Threw a coin into the Trevi Fountain, then webbed it back out. Fully refunded.'],
+  [52.5200,13.4050,'BERLIN','Attempted techno. Spider-sense could not find the beat.'],
+  [52.3676,4.9041,'AMSTERDAM','Fell off a bike. Then off a second bike.'],
+  [59.3293,18.0686,'STOCKHOLM','Built flat-pack furniture using only webs. Two screws left over.'],
+  [59.9139,10.7522,'OSLO','Too cold for spandex. Seen wearing a wool jumper over the suit.'],
+  [55.6761,12.5683,'COPENHAGEN','Hugged the Little Mermaid statue. She did not hug back.'],
+  [48.2082,16.3738,'VIENNA','Waltzed. Badly. Enthusiastically.'],
+  [50.0755,14.4378,'PRAGUE','Watched the astronomical clock for 45 minutes waiting for "the good bit".'],
+  [52.2297,21.0122,'WARSAW','Ate thirty pierogi. Much better than the Tahuna attempt.'],
+  [37.9838,23.7275,'ATHENS','Asked the Parthenon who did their scaffolding.'],
+  [41.0082,28.9784,'ISTANBUL','Got lost in the Grand Bazaar for six hours. Came out with four lamps.'],
+  [64.1466,-21.9426,'REYKJAVIK','Tried to web the northern lights. Missed.'],
+  [53.3498,-6.2603,'DUBLIN','Lost a staring contest to a seagull.'],
+  [55.9533,-3.1883,'EDINBURGH','Climbed the castle. Told off by a bagpiper.'],
+  [30.0444,31.2357,'CAIRO','Seen on top of a pyramid. Claims he "didn\'t touch anything".'],
+  [31.6295,-7.9811,'MARRAKECH','Haggled for a rug. Paid triple. Delighted anyway.'],
+  [6.5244,3.3792,'LAGOS','Danced at a wedding he wasn\'t invited to. Best dancer there.'],
+  [-1.2921,36.8219,'NAIROBI','Raced a giraffe. Very close call.'],
+  [-33.9249,18.4241,'CAPE TOWN','Webbed his hat to Table Mountain so the wind would stop stealing it.'],
+  [25.2048,55.2708,'DUBAI','Stood on top of the tallest building on Earth. Said {HER} would like the view.'],
+  [19.0760,72.8777,'MUMBAI','Danced in the street. Was immediately cast in a film.'],
+  [28.6139,77.2090,'DELHI','Ate a chilli that defeated his spider-sense.'],
+  [13.7563,100.5018,'BANGKOK','Rode a tuk-tuk. Then rode ON a tuk-tuk.'],
+  [1.3521,103.8198,'SINGAPORE','Ate chilli crab with his gloves on. Regrets.'],
+  [22.3193,114.1694,'HONG KONG','Finally found a city with too many buildings to swing between.'],
+  [31.2304,121.4737,'SHANGHAI','Swung along the riverfront waving at every single boat.'],
+  [37.5665,126.9780,'SEOUL','Did karaoke. Picked a ballad. Cried.'],
+  [35.6762,139.6503,'TOKYO','Bought every Hello Kitty and Keroppi thing in the Sanrio store. Mask now has a bow.'],
+  [34.6937,135.5023,'OSAKA','Ate takoyaki. Very respectful toward all eight arms.'],
+  [14.5995,120.9842,'MANILA','Sang at a jeepney stop. Encore requested.'],
+  [-33.8688,151.2093,'SYDNEY','Clung to the Opera House. Mistook a cockatoo for a supervillain.'],
+  [-37.8136,144.9631,'MELBOURNE','Ordered a flat white. Took twenty minutes to explain the mask.'],
+  [-27.4698,153.0251,'BRISBANE','Somehow got sunburnt through the suit.'],
+  [-31.9505,115.8605,'PERTH','Attempted a quokka selfie. Quokka unbothered.'],
+  [-41.2865,174.7762,'WELLINGTON','The wind carried him from Cuba St to the waterfront in one go. Called it free travel.'],
+  [-43.5321,172.6362,'CHRISTCHURCH','Scouting the karate tournament. Reports a very strong competitor arriving from Dunedin. Advises everyone else to go home.'],
+  [-45.0312,168.6626,'QUEENSTOWN','Did a bungy jump using a web instead of the cord. Staff not impressed.'],
+  [-38.1368,176.2497,'ROTORUA','Said the town smells "very villain-lair". Loved it anyway.'],
+  [45.5019,-73.5674,'MONTREAL','Asked for maple syrup "from a tree you tapped yourself". Waited a month. Worth it.'],
+  [50.8828,-119.8930,'SUN PEAKS, CANADA','Skied all day. Fell over with excellent technique.'],
+  [-10.0,-140.0,'HYRULE (APPROX.)','Chased by a Guardian. Described it as "like a massive spider, definitely bigger than your thumb". Shrines found: 0.']
+];
+// Dunedin. These all start unexplored.
+const LOCAL = [
+  [-45.8494,170.5326,'BALDWIN STREET','Climbed the world\'s steepest street. Then the houses on it.'],
+  [-45.8616,170.6262,'LARNACH CASTLE','Reports it would make an excellent villain lair. Has filed paperwork.'],
+  [-45.8573,170.5187,'BOTANIC GARDEN','Politely asked a duck to move. The duck did not.'],
+  [-45.9137,170.4884,'ST CLAIR ESPLANADE','Eating chips on the sea wall. The seagulls negotiated a share.'],
+  [-45.8757,170.5085,'RAILWAY STATION','Waiting for a train that may or may not be magical. Has questions about the man in the coat.'],
+  [-45.8657,170.5110,'OTAGO MUSEUM','Stood very still in the butterfly house for an hour. Three butterflies landed. A personal best.'],
+  [-45.9212,170.4592,'TUNNEL BEACH','Striking dramatic poses under the arch. Wrong movie again.'],
+  [-45.8452,170.5470,'SIGNAL HILL','Watching the city lights come on. Counted the Octagon twice.'],
+  [-45.8697,170.5960,'MACANDREW BAY','The bus takes an hour from the other side of town. Spidey did it in four minutes.'],
+  [-45.8745,170.5045,'CITY LIBRARY','Trying to crack an Atbash cipher. A local girl did it in 45 minutes. Spidey is still going.'],
+  [-45.8700,170.5060,'GEORGE STREET','Ordered a matcha with milk. Was informed that matcha without milk is "a bit unbearable". Agreed.'],
+  [-45.8693,170.5245,'FORSYTH BARR STADIUM','Cheering for Somerville. Wearing green. Doesn\'t fully know why. Committed anyway.'],
+  [-45.8935,170.5225,'A SMALL PARK','Seen on the swings. Swings are, quote, "so fun". Confirmed.'],
+  [-45.8875,170.5100,'EDGAR CENTRE','Practising roller skating along the wall. Five-year-olds zooming past at alarming speed.'],
+  [-45.8790,170.4980,'THE DAIRY','Bought 14 juice boxes and one (1) banana. Paid in exact change.']
+];
+const UNEXPLORED_START = 63;
+
+const sightings = [];
+[[WORLD, false], [LOCAL, true]].forEach(([list, local]) => list.forEach(w =>
+  sightings.push({ id: sightings.length + 1, lat: w[0], lng: w[1], place: w[2], text: sub(w[3]), local })));
+const TOTAL = sightings.length;
+function defaultExplored(){
+  const rnd = mulberry32(31), pool = sightings.filter(s => !s.local).map(s => s.id);
+  for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  return pool.slice(0, Math.max(0, TOTAL - UNEXPLORED_START));
+}
+let explored = new Set(store.get('explored', null) || defaultExplored());
+const saveExplored = () => store.set('explored', [...explored]);
+const remaining = () => TOTAL - explored.size;
+const memories = (CONFIG.memories || []).map((m, i) => ({ ...m, id: 'm' + i }));
+
+/* ================================================================
+   map
+   ================================================================ */
+const fold0 = isFold();
+const map = L.map('map', { zoomControl: false, worldCopyJump: true, minZoom: 1.5, maxZoom: 18, zoomSnap: .5, zoomDelta: .5, attributionControl: true });
+map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+const BASES = {
+  navy: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    { maxNativeZoom: 16, maxZoom: 18, className: 'tiles-navy', attribution: 'Map &copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors' }),
+  terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { maxNativeZoom: 18, maxZoom: 18, className: 'tiles-terrain', attribution: 'Imagery &copy; Esri' })
+};
+const LABELS = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+  { maxNativeZoom: 16, maxZoom: 18, className: 'tiles-labels', pane: 'overlayPane' });
+let baseName = 'navy'; BASES.navy.addTo(map); LABELS.addTo(map);
+
+// widest zoom that still fits Hawaii (-158) through New Zealand (+175) on screen, so Dunedin is never cut off
+function worldView(fly){
+  const w = map.getSize().x || 1200, z = Math.max(1.5, Math.floor(Math.log2(w * 360 / (340 * 256)) * 2) / 2);
+  const c = [22, 10];
+  fly ? map.flyTo(c, z, { duration: 1.4 }) : map.setView(c, z);
+}
+if (fold0) map.setView([CONFIG.home.lat, CONFIG.home.lng], 13); else worldView(false);
+
+// faint graticule like the original
+const grat = { color: '#3d73bd', weight: 1, opacity: .55, interactive: false };
+[0, 23.44, -23.44, 66.56, -66.56].forEach(lat => L.polyline([[lat, -540], [lat, 540]], grat).addTo(map));
+[-150, -90, -30, 30, 90, 150].forEach(lng => [-360, 0, 360].forEach(o => L.polyline([[-85, lng + o], [85, lng + o]], { ...grat, opacity: .3 }).addTo(map)));
+
+// pins are 25 art-pixels wide; size them so each art-pixel is a whole number of device pixels
+const PIN = snapPx(fold0 ? 40 : Math.min(56, Math.max(34, (Math.min(1400, innerWidth - 40) / 1890) * 64)), 25);
+const icon = (kind, extra = '') => L.divIcon({ className: 'pinwrap ' + extra, html: `<img class="pin sprite" src="${URL_[kind]}" alt="" draggable="false">`, iconSize: [PIN, PIN], iconAnchor: [PIN/2, PIN/2] });
+const ICONS = { red: icon('red'), green: icon('green'), heart: icon('heart'), star: icon('star', 'star-bob') };
+let heartMode = false;
+const filt = { green: true, red: true };
+
+const markers = new Map();
+const pinLayer = L.layerGroup().addTo(map);
+const iconFor = s => heartMode ? ICONS.heart : explored.has(s.id) ? ICONS.green : ICONS.red;
+sightings.forEach(s => {
+  const m = L.marker([s.lat, s.lng], { icon: iconFor(s), keyboard: true, title: s.place, riseOnHover: true });
+  m.on('click', () => openSighting(s)); markers.set(s.id, m); pinLayer.addLayer(m);
+});
+memories.forEach(mem => {
+  L.marker([mem.lat, mem.lng], { icon: heartMode ? ICONS.heart : ICONS.star, zIndexOffset: 800, title: mem.title })
+    .on('click', () => openMemory(mem)).addTo(map);
+});
+function refreshAll(){ sightings.forEach(s => markers.get(s.id).setIcon(iconFor(s))); }
+function applyFilters(){
+  sightings.forEach(s => { const m = markers.get(s.id), show = explored.has(s.id) ? filt.green : filt.red;
+    if (show && !pinLayer.hasLayer(m)) pinLayer.addLayer(m); else if (!show && pinLayer.hasLayer(m)) pinLayer.removeLayer(m); });
+  $('#tabGreen').classList.toggle('on', filt.green); $('#tabRed').classList.toggle('on', filt.red);
+  document.querySelectorAll('[data-act="a1"]').forEach(b => b.classList.toggle('lit', filt.green && filt.red));
+  document.querySelectorAll('[data-act="a2"]').forEach(b => b.classList.toggle('lit', !filt.green && filt.red));
+  updateRadarDots();
+}
+
+let herPos = null, herMarker = null;
+function placeHer(latlng){
+  herPos = { lat: latlng[0], lng: latlng[1] };
+  const ic = L.divIcon({ className: 'pinwrap', html: `<div class="me-pin"><span class="ring"></span><img class="sprite" src="${URL_.me}" alt=""></div>`, iconSize: [PIN, PIN], iconAnchor: [PIN/2, PIN/2] });
+  if (herMarker) herMarker.setLatLng(latlng); else herMarker = L.marker(latlng, { icon: ic, zIndexOffset: 1000, title: HER }).on('click', openHer).addTo(map);
+}
+
+/* ================================================================
+   banner, counters, toast, speech
+   ================================================================ */
+const Banner = {
+  timer: null,
+  set(html, ms){
+    const b = $('#banner'); $('#bannerText').innerHTML = html;
+    b.classList.remove('flash'); void b.offsetWidth; b.classList.add('flash');
+    clearTimeout(this.timer); if (ms) this.timer = setTimeout(() => this.count(), ms);
+  },
+  count(){ const n = remaining(); $('#bannerText').innerHTML = n ? `${n} UNEXPLORED<br>SIGHTINGS` : `ALL SIGHTINGS<br>EXPLORED`; }
+};
+function updateCounters(){
+  $('#lcd').textContent = '0x' + hex(explored.size, 8);
+  $('#heartNum').textContent = memories.length;
+}
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+let speechT, talkTaps = [];
+function talk(){
+  const sp = $('#speech'); sp.textContent = sub(pick(CONFIG.chibiLines)); sp.classList.add('show'); Sound.blip();
+  clearTimeout(speechT); speechT = setTimeout(() => sp.classList.remove('show'), 4200);
+  const now = Date.now(); talkTaps = talkTaps.filter(t => now - t < 4000); talkTaps.push(now);
+  if (talkTaps.length >= 7){ talkTaps = []; heartAttack(); }
+}
+
+/* ================================================================
+   panels
+   ================================================================ */
+const modal = $('#modal'), panel = $('#panel');
+function openPanel({ tone = 'peach', kicker = '', title = '', icon = null, body = '', actions = [] }){
+  panel.className = 'panel tone-' + tone;
+  panel.innerHTML = `<div class="panel-head">${icon ? `<img class="panel-icon sprite" src="${icon}" alt="">` : ''}
+    <div class="panel-titles">${kicker ? `<div class="kicker">${kicker}</div>` : ''}<div class="ptitle">${title}</div></div>
+    <button class="xbtn" data-close aria-label="Close">X</button></div>
+    <div class="panel-body">${body}</div>${actions.length ? '<div class="panel-actions"></div>' : ''}`;
+  const act = panel.querySelector('.panel-actions');
+  actions.forEach(a => { const b = document.createElement('button'); b.className = 'pbtn sm ' + (a.tone || ''); b.textContent = a.label; b.onclick = a.fn; act.appendChild(b); });
+  modal.hidden = false; Sound.blip();
+  const x = panel.querySelector('.xbtn'); x && x.focus({ preventScroll: true });
+}
+function closePanel(){ modal.hidden = true; }
+modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('[data-close]')) closePanel(); });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ closePanel(); stopTrailer(); } });
+
+const fromWhere = () => herPos ? 'FROM YOU' : 'FROM HQ';
+const fromPos = () => herPos || CONFIG.home;
+function zoomTo(lat, lng, z = 15){ closePanel(); map.flyTo([lat, lng], z, { duration: 1.6 }); }
+
+function openSighting(s){
+  const ex = explored.has(s.id);
+  openPanel({
+    tone: ex ? 'green' : 'red', icon: ex ? URL_.green : URL_.red,
+    kicker: `SIGHTING #0x${hex(s.id, 4)}`, title: esc(s.place),
+    body: `<div class="chips"><span class="chip ${ex ? 'g' : 'r'}">${ex ? 'EXPLORED' : 'UNEXPLORED'}</span><span class="chip">${fmtKm(km(fromPos(), s))} ${fromWhere()}</span></div>
+      <p class="quote">"${esc(s.text)}"</p><p class="meta">LAT ${s.lat.toFixed(4)} &middot; LNG ${s.lng.toFixed(4)}</p>`,
+    actions: ex ? [{ label: 'ZOOM IN', tone: 'blue', fn: () => zoomTo(s.lat, s.lng) }]
+                : [{ label: 'MARK EXPLORED', tone: 'green', fn: () => explore(s) }, { label: 'ZOOM IN', tone: 'blue', fn: () => zoomTo(s.lat, s.lng) }]
+  });
+}
+function explore(s){
+  if (explored.has(s.id)) return;
+  explored.add(s.id); saveExplored(); closePanel();
+  const m = markers.get(s.id); m.setIcon(iconFor(s));
+  const img = m.getElement() && m.getElement().querySelector('.pin'); if (img){ img.classList.remove('pop'); void img.offsetWidth; img.classList.add('pop'); }
+  const fx = L.marker([s.lat, s.lng], { icon: L.divIcon({ className: 'burst-wrap', html: '<div class="burst"></div>', iconSize: [PIN, PIN], iconAnchor: [PIN/2, PIN/2] }), interactive: false }).addTo(map);
+  setTimeout(() => map.removeLayer(fx), 700);
+  Sound.coin(); updateCounters(); applyFilters();
+  if (remaining() === 0){ Banner.count(); setTimeout(finale, 900); }
+  else Banner.set('SIGHTING<br>EXPLORED!', 1600);
+}
+/* NEXT MISSION: an Atbash-encrypted transmission (the cipher she cracked in the back of his book) */
+const atbash = s => s.replace(/[A-Z]/g, c => String.fromCharCode(155 - c.charCodeAt(0)));
+const letters = s => String(s).toUpperCase().replace(/[^A-Z]/g, '');
+function openCipher(mem){
+  const plain = String(CONFIG.transmission).toUpperCase(), enc = atbash(plain);
+  let tries = 0;
+  const solvedHtml = () => `<div class="cipher-plain">${esc(plain)}</div><p class="meta">TRANSMISSION DECODED. REPLY TO: ${esc(ME)}.</p>`;
+  openPanel({ tone: 'blue', icon: URL_.star, kicker: 'NEXT MISSION // ENCRYPTED', title: 'INCOMING TRANSMISSION',
+    body: `<div class="chips"><span class="chip b">${esc(mem.place || '')}</span><span class="chip">${esc(mem.date || '')}</span></div>
+      <p>${esc(sub(mem.note || ''))}</p><div class="cipher">${esc(enc)}</div>
+      <div id="cipherOut">${store.get('cipherSolved', false) ? solvedHtml() : `<form class="chat-form" id="cipherForm" autocomplete="off">
+        <input id="cipherIn" placeholder="TYPE THE DECODED MESSAGE..."><button class="pbtn sm green">DECODE</button></form>
+        <p class="meta" id="cipherHint">HINT: A=Z, B=Y. YOU KNOW THE REST.</p>`}</div>`,
+    actions: [{ label: 'ZOOM IN', tone: 'blue', fn: () => zoomTo(mem.lat, mem.lng, 16) }] });
+  const form = $('#cipherForm'); if (!form) return;
+  const win = () => { store.set('cipherSolved', true); $('#cipherOut').innerHTML = solvedHtml(); Sound.fanfare(); heartRain(30); };
+  form.onsubmit = e => {
+    e.preventDefault();
+    const got = letters($('#cipherIn').value), want = letters(plain);
+    let same = 0; for (let i = 0; i < want.length; i++) if (got[i] === want[i]) same++;
+    if (same / want.length >= .85 && Math.abs(got.length - want.length) <= 4) return win();
+    tries++; Sound.tone(140, Sound.now(), .25, 'square', .25);
+    $('#cipherHint').innerHTML = tries < 3 ? `NOT QUITE (${Math.round(same / want.length * 100)}% MATCH). TRY AGAIN.`
+      : `NOT QUITE. <button class="pbtn sm red" id="giveUp">JUST TELL ME</button>`;
+    const g = $('#giveUp'); if (g) g.onclick = win;
+  };
+  setTimeout(() => { const i = $('#cipherIn'); i && i.focus({ preventScroll: true }); }, 50);
+}
+function openMemory(mem){
+  if (mem.cipher) return openCipher(mem);
+  openPanel({ tone: 'blue', icon: URL_.star, kicker: 'MAJOR SIGHTING', title: esc(mem.title),
+    body: `<div class="chips"><span class="chip b">${esc(mem.place || '')}</span>${mem.date ? `<span class="chip">${esc(mem.date)}</span>` : ''}</div><p class="quote">${esc(sub(mem.note || ''))}</p>`,
+    actions: [{ label: 'ZOOM IN', tone: 'blue', fn: () => zoomTo(mem.lat, mem.lng, 16) }] });
+}
+function openHer(){
+  openPanel({ tone: 'peach', icon: URL_.me, kicker: 'LOCATION LOCK', title: `HI, AGENT ${esc(HER)}`,
+    body: `<p class="quote">Spidey sightings near you are now on the radar. Happy hunting.</p><dl class="stat">
+      <dt>EYE COLOUR</dt><dd>BROWN. (GREEN WHEN REALLY HAPPY. CHECK A MIRROR.)</dd></dl><p class="meta">RECOMMENDED ACTION: TEXT ${esc(ME)}.</p>`,
+    actions: [{ label: '<3', tone: 'red', fn: () => { closePanel(); heartAttack(); } }] });
+}
+function profile(which){
+  // avatars render at exactly 5 screen px per art-pixel (no CSS scaling, so they stay crisp and centred)
+  const avatar = grid => `<img class="avatar sprite" src="${paint(mk(), grid, which === 1 ? PAL_PINK : PAL, 5).toDataURL()}" alt="">`;
+  if (which === 1){
+    openPanel({ tone: 'red', icon: URL_.heart, kicker: 'AGENT FILE // PROF 1', title: `CODENAME: ${esc(HER)}`,
+      body: `${avatar(BRAID_HEAD)}<dl class="stat">
+      <dt>A.K.A.</dt><dd>MADDY (WITH A Y)</dd>
+      <dt>FIRST CONTACT</dt><dd>TAHUNA KITCHEN, YEAR 8</dd>
+      <dt>SKILLS</dt><dd>Karate black belt. Karate referee (in a suit). Fencing. Curling. Kapa haka. Japanese. Cracking Atbash ciphers in 45 minutes. Being right about bus times.</dd>
+      <dt>WEAKNESSES</dt><dd>Wizzrobes. Camera flash. Spiders bigger than your thumb. Winking.</dd>
+      <dt>EQUIPMENT</dt><dd>Hello Kitty hottie. Refillable Typo pen (0.7 mm, excellent click).</dd>
+      <dt>SIGNATURE</dt><dd>Two French braids.</dd>
+      <dt>BLOOD TYPE</dt><dd>O NEGATIVE. GIVES TO EVERYONE. CHECKS OUT.</dd>
+      <dt>CATCHPHRASE</dt><dd>"Crazy." (Also "sorry". Working on it.)</dd></dl>` });
+  } else if (which === 2){
+    openPanel({ tone: 'green', icon: URL_.red, kicker: 'AGENT FILE // PROF 2', title: 'CODENAME: SPIDEY',
+      body: `${avatar(HEAD)}<dl class="stat"><dt>STATUS</dt><dd>SWINGING</dd><dt>LAST SEEN</dt><dd>THE RIALTO, 3 OCT, 4:30 SESSION</dd>
+      <dt>SKILLS</dt><dd>Sticking to things. Quips. Being bigger than your thumb (sorry).</dd></dl>
+      <p class="meta">NOTE: Has been demoted to third most interesting on this tracker, behind ${esc(HER)} and Elsa the cat.</p>` });
+  } else {
+    openPanel({ tone: 'blue', icon: URL_.me, kicker: 'AGENT FILE // PROF 3', title: `CODENAME: ${esc(ME)}`,
+      body: `<dl class="stat"><dt>A.K.A.</dt><dd>JACKSON. ACTION JACKSON.</dd>
+      <dt>CLASS</dt><dd>PALADIN. DIVINE SMITE, 2D6+4. (HE WILL EXPLAIN.)</dd>
+      <dt>SKILLS</dt><dd>Guitar. 120 WPM. Lucid dreaming. Building apps at 1am (see: Glow Selfie, this).</dd>
+      <dt>CURRENT PROJECT</dt><dd>A book about a train. Editor: ${esc(HER)} (semicolon division).</dd>
+      <dt>WEAKNESSES</dt><dd>Roller skates. Autocorrect. Sheet A. Wheat bags (wrong opinion).</dd>
+      <dt>OUTSTANDING DEBTS</dt><dd>1 &times; ROLLER SKATING SESSION</dd></dl>` });
+  }
+}
+function archive(){
+  const pct = Math.round(explored.size / TOTAL * 100);
+  openPanel({ tone: 'peach', icon: URL_.star, kicker: 'ARCHIVE', title: 'CASE FILES',
+    body: `<div class="sec">MAJOR SIGHTINGS</div><ul class="list">${memories.map((m, i) => `<li><button data-mem="${i}">&#9733; ${esc(m.title)} <span>${esc(m.place || '')}</span></button></li>`).join('')}</ul>
+      <div class="sec">FIELD LOG</div><div class="meter"><i style="width:${pct}%;background:repeating-linear-gradient(90deg,var(--green) 0 10px,var(--green-l) 10px 14px)"></i></div>
+      <p>${explored.size} / ${TOTAL} SIGHTINGS EXPLORED (${pct}%)</p>`,
+    actions: [{ label: 'PLAY TRAILER', fn: () => { closePanel(); playTrailer(); } }, { label: 'TICKETS', tone: 'red', fn: tickets },
+              { label: 'TRANSMISSION', tone: 'green', fn: () => openCipher(memories.find(m => m.cipher) || memories[0]) },
+              { label: 'RESET', tone: 'blue', fn: function(){ if (this.dataset.armed){ explored = new Set(defaultExplored()); saveExplored(); refreshAll(); applyFilters(); updateCounters(); Banner.count(); closePanel(); toast('TRACKER RESET'); } else { this.dataset.armed = 1; this.textContent = 'SURE?'; } } }] });
+  panel.querySelectorAll('[data-mem]').forEach(b => b.onclick = () => { const m = memories[+b.dataset.mem]; zoomTo(m.lat, m.lng, 16); });
+}
+function tickets(){
+  openPanel({ tone: 'red', kicker: 'BOX OFFICE', title: 'GET TICKETS',
+    body: `<div class="ticket"><div class="tk-main"><div>EDGAR CENTRE ROLLER RINK</div><div class="tk-admit">ADMIT TWO</div>
+      <div class="tk-row"><b>FEATURE</b>${esc(ME)} ATTEMPTS ROLLER SKATING</div><div class="tk-row"><b>COACH</b>${esc(HER)}</div>
+      <div class="tk-row"><b>CATCHER</b>ALSO ${esc(HER)}</div><div class="tk-row"><b>VALID</b>WHEN YOU'RE BACK FROM CHRISTCHURCH</div></div>
+      <div class="tk-stub"><div>NO.<br>0002</div><div class="barcode"></div><div>THWIP</div></div></div>
+      <div class="ticket"><div class="tk-main"><div>SPIDEY TRACKER CINEMAS</div><div class="tk-admit">ADMIT TWO</div>
+      <div class="tk-row"><b>FEATURE</b>MOVIE NIGHT #2. YOUR PICK. (10 THINGS I HATE ABOUT YOU IS ON THE TABLE)</div>
+      <div class="tk-row"><b>SEATS</b>NEXT TO EACH OTHER</div><div class="tk-row"><b>SNACKS</b>ON ${esc(ME)}</div></div>
+      <div class="tk-stub"><div>NO.<br>0003</div><div class="barcode"></div><div>THWIP</div></div></div>`,
+    actions: [{ label: 'REDEEM', tone: 'green', fn: () => { closePanel(); heartRain(26); Sound.fanfare(); toast(`REDEEMED! SCREENSHOT IT AND SEND IT TO ${ME}`); } }] });
+}
+const HQ = [
+  [/[぀-ヿ一-龯]/, `おもしろい! (HQ's Japanese is very bad. Please be patient with HQ.)`],
+  [/\b(hi+|hey+|hello+|yo|hiya)\b/i, `Agent ${HER}! The tracker lights up every time you log in. (Literally. It's the radar.)`],
+  [/love|like you|adore/i, `Transmission intercepted from ${ME}. Contents: one heart emoji. Then eleven more.`],
+  [/sorry/i, `Apology detected. HQ reminds you that you don't need to be sorry. ${ME} would like this on the record.`],
+  [/\b(ok|okay)\b/i, `HQ notes you said "ok". HQ has been told this runs in the family.`],
+  [/indubitabl|fabulous/i, `Indubitably.`],
+  [/crazy/i, `Crazy stuff.`],
+  [/spid|peter|parker/i, `Spidey is out swinging. He asked us to say he's a big fan.`],
+  [/movie|film|cinema|rialto|ticket/i, `Records show: Spider-Man, the Rialto, 3 Oct, 4:30 session. Tuke: present. Coziness: confirmed. Sequel: see GET TICKETS.`],
+  [/zelda|botw|totk|link|hyrule|korok/i, `BOTW or TOTK? ...HQ agrees. Obviously.`],
+  [/karate|christchurch|tournament|kata/i, `HQ has notified Christchurch. Christchurch is nervous.`],
+  [/curl|sheet/i, `Sheet A remains the enemy.`],
+  [/skat/i, `${ME}'s roller skating attempt has been filed under HIGH RISK. Coach: you.`],
+  [/elsa|\bcats?\b/i, `Elsa has been granted honorary agent status. Field report: cat-hair tumbleweed city.`],
+  [/miss/i, `Relaying to ${ME}. Response expected within minutes. Probably seconds.`],
+  [/cute|pretty|beautiful/i, `Confirmed. Radar is maxed out.`],
+  [/thank/i, `Anytime, agent. HQ out. (HQ is not actually out. HQ is always here.)`]
+];
+const HQ_DEFAULT = [`Copy that.`, `Message logged in the archive of very important things.`, `*static* ...sorry, Spidey swung through the antenna again.`,
+  `Crazy.`, `Sounds like a plan, Stan.`, `Roger. Spider-sense says ${ME} is smiling at his phone right now.`];
+function chat(){
+  openPanel({ tone: 'peach', kicker: 'SECURE CHANNEL', title: 'SPIDEY HQ COMMS',
+    body: `<div class="chat-log" id="chatLog"></div><form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="140" placeholder="TYPE A MESSAGE..."><button class="pbtn sm green">SEND</button></form>` });
+  const log = $('#chatLog');
+  const add = (who, txt) => { const d = document.createElement('div'); d.className = 'msg ' + who; d.textContent = (who === 'hq' ? 'HQ: ' : '') + txt; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; };
+  add('hq', `Agent ${HER}, do you copy? This channel is monitored by Spidey HQ.`);
+  $('#chatForm').onsubmit = e => {
+    e.preventDefault(); const v = $('#chatIn').value.trim(); if (!v) return; $('#chatIn').value = ''; add('me', v); Sound.blip();
+    const t = add('hq typing', '...');
+    setTimeout(() => { t.remove(); const hit = HQ.find(([re]) => re.test(v)); add('hq', hit ? hit[1] : pick(HQ_DEFAULT)); Sound.blip(); }, 650 + Math.random() * 600);
+  };
+  setTimeout(() => { const i = $('#chatIn'); i && i.focus(); }, 50);
+}
+async function share(){
+  const text = `I've explored ${explored.size}/${TOTAL} Spidey sightings on my Spidey Tracker. Best one so far: the Rialto, 3 Oct.`;
+  try { if (navigator.share){ await navigator.share({ title: 'Spidey Tracker', text }); return; } } catch(e){ if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text); toast('SIGHTING REPORT COPIED'); } catch(e){ toast('SHARE UNAVAILABLE ON THIS DEVICE'); }
+}
+function finale(){
+  heartRain(40); Sound.fanfare();
+  openPanel({ tone: 'red', icon: URL_.heart, kicker: `ALL ${TOTAL} SIGHTINGS EXPLORED`, title: 'MISSION COMPLETE',
+    body: `<div class="reveal"><p style="animation-delay:.2s">Every sighting on the map, explored.</p><div class="big-reveal" style="animation-delay:1.4s">NICE WORK,<br>AGENT ${esc(HER)}.</div>
+      <p class="quote" style="animation-delay:2.6s">${esc(sub(CONFIG.finalMessage))}</p></div>`,
+    actions: [{ label: '<3', tone: 'red', fn: () => { closePanel(); heartAttack(); } }] });
+}
+
+/* ================================================================
+   fun stuff: spider-sense, locate, heart rain, trailer
+   ================================================================ */
+function spiderSense(){
+  const d = $('#device'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); Sound.alarm();
+  const pool = sightings.filter(s => !explored.has(s.id)); if (!pool.length){ Banner.set('NO SIGHTINGS<br>LEFT. JUST YOU.', 3000); return; }
+  const s = pick(pool); Banner.set('SPIDER-SENSE<br>TINGLING!', 3200);
+  closePanel(); map.flyTo([s.lat, s.lng], Math.max(map.getZoom(), s.local ? 15 : 9), { duration: 1.8 });
+  map.once('moveend', () => setTimeout(() => openSighting(s), 250));
+}
+function locate(){
+  Banner.set('TRIANGULATING<br>...', 0); Sound.blip();
+  const done = (ll, real) => {
+    placeHer(ll); closePanel(); map.flyTo(ll, 15, { duration: 1.8 });
+    Banner.set(real ? 'SIGHTING IN YOUR<br>DIRECT VICINITY' : 'SIGNAL WEAK:<br>USING HQ', 5000);
+    map.once('moveend', () => setTimeout(openHer, 300)); Sound.alarm();
+  };
+  if (!navigator.geolocation) return done([CONFIG.home.lat, CONFIG.home.lng], false);
+  navigator.geolocation.getCurrentPosition(p => done([p.coords.latitude, p.coords.longitude], true),
+    () => done([CONFIG.home.lat, CONFIG.home.lng], false), { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
+}
+function heartRain(n){
+  for (let i = 0; i < n; i++){
+    const h = new Image(); h.src = heartSprite; h.className = 'heart-fall sprite'; const sz = 18 + Math.random() * 30;
+    h.style.cssText = `left:${Math.random() * 100}vw;width:${sz}px;--d:${3 + Math.random() * 3}s;--dl:${Math.random() * 2}s;--dx:${(Math.random() - .5) * 160}px;--r:${(Math.random() - .5) * 120}deg`;
+    h.addEventListener('animationend', () => h.remove()); document.body.appendChild(h);
+  }
+}
+let heartT;
+function heartAttack(){
+  heartMode = true; refreshAll(); heartRain(44); Sound.fanfare();
+  Banner.set(`HI ${HER}!<br>CRAZY STUFF`, 9000);
+  clearTimeout(heartT); heartT = setTimeout(() => { heartMode = false; refreshAll(); }, 12000);
+}
+let typed = '';
+addEventListener('keydown', e => {
+  if (e.target.closest('input,textarea')) return;
+  if (e.key.length === 1){ typed = (typed + e.key.toLowerCase()).slice(-24); if (typed.endsWith(HER.toLowerCase())){ typed = ''; heartAttack(); } }
+});
+
+const TRAILER = [
+  { t: `A ${ME} PRODUCTION`, d: 2400 },
+  { t: 'IN A WORLD...', d: 2400, fx: 'boom' },
+  { t: 'WHERE TWO PEOPLE HAD KNOWN EACH OTHER\nSINCE A TAHUNA KITCHEN...', d: 3400 },
+  { t: '...AND HAD NEVER ONCE TEXTED.', d: 2600, fx: 'boom' },
+  { t: 'ONE CURLING TOURNAMENT LATER,\nTHEY WERE UP UNTIL 1AM\nARGUING ABOUT WIZZROBES.', d: 3800 },
+  { t: 'HE BUILT HER A SELFIE APP.\nSHE FIXED HIS SEMICOLONS.', d: 3400, fx: 'boom' },
+  { t: '3 OCTOBER. THE RIALTO.\nONE SPIDER-MAN. FIVE TICKETS.\nONE HAND HELD WHERE NOBODY COULD SEE.', d: 4400 },
+  { html: `<span class="tr-big">${esc(HER)}</span><span class="tr-sub">A BRAND NEW DAY</span>`, d: 4600, fx: 'fanfare' },
+  { t: 'RATED M\n(FOR MADELINE)', d: 2800 },
+  { t: 'COMING SOON:\nTHE ROLLER SKATING SEQUEL.', d: 3400 }
+];
+let trailerRun = 0;
+async function playTrailer(){
+  const run = ++trailerRun, el = $('#trailer'), tx = $('#trailerText'); el.hidden = false;
+  const wasPlaying = Sound.playing; if (wasPlaying) Sound.stopMusic(); el.dataset.music = wasPlaying ? '1' : '';
+  for (const card of TRAILER){
+    if (run !== trailerRun) return;
+    if (card.fx) Sound[card.fx]();
+    if (card.html){ tx.innerHTML = card.html; }
+    else { tx.textContent = ''; for (let i = 1; i <= card.t.length; i++){ if (run !== trailerRun) return; tx.textContent = card.t.slice(0, i); if (i % 2) Sound.tone(1200, Sound.now(), .02, 'square', .05); await sleep(32); } }
+    await sleep(card.d);
+    tx.textContent = ''; await sleep(350);
+  }
+  stopTrailer();
+}
+function stopTrailer(){
+  const el = $('#trailer'); if (el.hidden) return; trailerRun++; el.hidden = true;
+  if (el.dataset.music) Sound.startMusic();
+}
+$('#trailerSkip').onclick = stopTrailer;
+
+/* ================================================================
+   radar minimap
+   ================================================================ */
+const radar = $('#radar'), rg = radar.getContext('2d');
+let radarDots = [];
+function sizeRadar(){ const r = radar.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); radar.width = Math.max(60, r.width * dpr); radar.height = radar.width; drawRadar(performance.now()); }
+function updateRadarDots(){
+  const sz = map.getSize(), hx = sz.x / 2, hy = sz.y / 2, out = [];
+  const addPt = (ll, col) => { const p = map.latLngToContainerPoint(ll), x = (p.x - hx) / Math.max(hx, hy), y = (p.y - hy) / Math.max(hx, hy);
+    if (x*x + y*y < 1) out.push({ x, y, col }); };
+  sightings.forEach(s => { const m = markers.get(s.id); if (pinLayer.hasLayer(m)) addPt(m.getLatLng(), explored.has(s.id) ? '#7cf09a' : '#ff6a5c'); });
+  memories.forEach(m => addPt([m.lat, m.lng], '#bfe4ff'));
+  if (herPos) addPt([herPos.lat, herPos.lng], '#ffd24d');
+  radarDots = out;
+}
+map.on('move zoom', updateRadarDots);
+let lastFrame = 0;
+function radarLoop(t){
+  requestAnimationFrame(radarLoop);
+  if (t - lastFrame < 33) return; lastFrame = t; drawRadar(t);
+}
+function drawRadar(t){
+  const S = radar.width, c = S / 2, R = S * .47, N = 10, g = rg;
+  const poly = r => { g.beginPath(); for (let i = 0; i <= N; i++){ const a = i / N * Math.PI * 2 - Math.PI / 2; const x = c + Math.cos(a) * r, y = c + Math.sin(a) * r; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); };
+  g.clearRect(0, 0, S, S);
+  poly(R); g.fillStyle = 'rgba(8,22,58,.86)'; g.fill();
+  g.save(); poly(R); g.clip();
+  const ang = (t / 1000 * 1.5) % (Math.PI * 2);
+  for (let j = 0; j < 26; j++){ const a0 = ang - j * .04; g.beginPath(); g.moveTo(c, c); g.arc(c, c, R, a0 - .045, a0); g.closePath(); g.fillStyle = `rgba(120,200,255,${.2 * (1 - j / 26)})`; g.fill(); }
+  g.lineWidth = Math.max(1, S * .006); g.strokeStyle = 'rgba(90,165,240,.7)';
+  for (let k = 1; k < 7; k++){ poly(R * k / 7); g.stroke(); }
+  for (let i = 0; i < N; i++){ const a = i / N * Math.PI * 2 - Math.PI / 2; g.beginPath(); g.moveTo(c, c); g.lineTo(c + Math.cos(a) * R, c + Math.sin(a) * R); g.stroke(); }
+  g.strokeStyle = '#d4efff'; g.lineWidth = Math.max(1.5, S * .01); g.beginPath(); g.moveTo(c, c); g.lineTo(c + Math.cos(ang) * R, c + Math.sin(ang) * R); g.stroke();
+  const ps = Math.max(2, Math.round(S * .028));
+  radarDots.forEach(d => {
+    let diff = (ang - Math.atan2(d.y, d.x)) % (Math.PI * 2); if (diff < 0) diff += Math.PI * 2;
+    g.globalAlpha = Math.max(.25, 1 - diff / 4.2); g.fillStyle = d.col;
+    g.fillRect(Math.round(c + d.x * R * .96 - ps / 2), Math.round(c + d.y * R * .96 - ps / 2), ps, ps);
+  });
+  g.globalAlpha = 1; g.restore();
+  poly(R); g.lineWidth = Math.max(2, S * .016); g.strokeStyle = '#3d8ee0'; g.stroke();
+  poly(R + g.lineWidth); g.lineWidth = Math.max(1, S * .008); g.strokeStyle = '#0c1533'; g.stroke();
+}
+
+/* ================================================================
+   wiring
+   ================================================================ */
+const ACTIONS = {
+  prof1: () => profile(1), prof2: () => profile(2), prof3: () => profile(3),
+  sense: spiderSense, center: locate, world: () => { closePanel(); worldView(true); Banner.count(); },
+  filterGreen: () => { filt.green = !filt.green; applyFilters(); Sound.blip(); toast(filt.green ? 'SHOWING EXPLORED' : 'HIDING EXPLORED'); },
+  filterRed:   () => { filt.red = !filt.red; applyFilters(); Sound.blip(); toast(filt.red ? 'SHOWING UNEXPLORED' : 'HIDING UNEXPLORED'); },
+  a1: () => { filt.green = filt.red = true; applyFilters(); Sound.blip(); toast('A.1: ALL SIGHTINGS'); },
+  a2: () => { filt.green = false; filt.red = true; applyFilters(); Sound.blip(); toast('A.2: UNEXPLORED ONLY'); },
+  music: () => Sound.toggle(),
+  talk, trailer: playTrailer, tickets, chat, archive, share,
+  terrain: () => { map.removeLayer(BASES[baseName]); baseName = baseName === 'navy' ? 'terrain' : 'navy'; BASES[baseName].addTo(map); Sound.blip(); toast(baseName === 'navy' ? 'MAP: CITY GRID' : 'MAP: TERRAIN SCAN'); },
+  '3d': () => { Sound.tone(140, Sound.now(), .25, 'square', .25); toast('3D VIEW LOCKED // REQUIRES 2 TICKETS + 1 LARGE POPCORN'); }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const fn = ACTIONS[b.dataset.act]; if (fn){ Sound.init(); fn(); }
+});
+
+// ticker
+(() => {
+  const items = CONFIG.ticker.map(s => esc(sub(s)));
+  const line = items.join(' <b>&#9632;</b> ') + ' <b>&#9632;</b> ';
+  const tr = $('#tickerTrack'); tr.innerHTML = line + line;
+  tr.style.setProperty('--dur', Math.max(30, line.length * .32) + 's');
+})();
+$('#logoName').textContent = HER; $('#pwMe').textContent = ME; $('#bootSub').textContent = HER + ' EDITION';
+if (CONFIG.firstMovieDate) $('#logoDate').textContent = 'RIALTO · ' + String(CONFIG.firstMovieDate).toUpperCase();
+document.querySelectorAll('.fold-label').forEach(e => e.style.display = '');
+
+// chibi blink
+setInterval(() => {
+  paint($('#chibiCanvas'), chibi(blinkHead), PAL, 4); paint($('#podCanvas'), chibi(blinkHead), PAL, 3);
+  setTimeout(() => { paint($('#chibiCanvas'), chibi(HEAD), PAL, 4); paint($('#podCanvas'), chibi(HEAD), PAL, 3); }, 160);
+}, 3800);
+
+const onResize = () => { map.invalidateSize(); sizeRadar(); updateRadarDots(); snapSprites(); };
+addEventListener('resize', onResize);
+new ResizeObserver(sizeRadar).observe(radar);
+sizeRadar(); updateRadarDots(); updateCounters(); applyFilters(); snapSprites();
+requestAnimationFrame(radarLoop);
+
+/* ================================================================
+   boot sequence
+   ================================================================ */
+(async () => {
+  const log = $('#bootLog'), fill = $('#bootFill'), start = $('#startBtn');
+  const lines = [
+    'SPIDEY TRACKER // BUILD 03.10',
+    '> CALIBRATING SPIDER-SENSE ......... OK',
+    `> LOADING SIGHTINGS DATABASE ....... ${TOTAL} FOUND`,
+    '> CHECKING SPIDERS VS THUMB SIZE ... SAFE',
+    `> AGENT LOGIN: ${HER} ......... OK`,
+    '> WELCOME BACK, AGENT.'
+  ];
+  let skip = false; $('#boot').addEventListener('click', () => skip = true, { once: true });
+  for (let i = 0; i < lines.length; i++){
+    for (let j = 0; j <= lines[i].length; j++){ if (skip) break; log.textContent = lines.slice(0, i).join('\n') + (i ? '\n' : '') + lines[i].slice(0, j); await sleep(14); }
+    fill.style.width = ((i + 1) / lines.length * 100) + '%';
+    if (!skip) await sleep(i === 4 ? 650 : 160);
+  }
+  log.textContent = lines.join('\n'); fill.style.width = '100%';
+  start.hidden = false; start.focus({ preventScroll: true });
+})();
+function begin(withSound){
+  if (withSound){ Sound.init(); Sound.start(); if (store.get('music', true)) setTimeout(() => Sound.startMusic(), 500); }
+  const boot = $('#boot'); if (boot){ boot.classList.add('gone'); setTimeout(() => boot.remove(), 600); }
+  onResize();
+  if (isFold()){ map.setView([CONFIG.home.lat, CONFIG.home.lng], 13); setTimeout(() => Banner.set('SIGHTING IN YOUR<br>DIRECT VICINITY', 4500), 450); }
+  else {
+    // desktop intro: the whole world first (like the original), then a signal pulls the map home to Dunedin
+    worldView(false); setTimeout(() => Banner.count(), 450);
+    let touched = false; map.once('dragstart', () => touched = true);
+    setTimeout(() => {
+      if (touched || !modal.hidden) return;
+      Sound.alarm(); toast('NEW SIGNAL DETECTED: ' + String(CONFIG.home.label).toUpperCase());
+      Banner.set('SIGHTING IN YOUR<br>DIRECT VICINITY', 6000);
+      map.flyTo([CONFIG.home.lat, CONFIG.home.lng], 12.5, { duration: 3.2 });
+    }, 3600);
+  }
+}
+$('#startBtn').addEventListener('click', e => { e.stopPropagation(); begin(true); });
+Banner.count();
+if (location.hash === '#go') begin(false);   // skip the boot screen (used for screenshots)
+
+// test hook for the headless check (harmless in normal use)
+window.__spidey = { sightings, explored: () => explored, TOTAL, remaining, explore, map, ACTIONS, openCipher, memories, atbash,
+  grids: { HEAD, chibi: chibi(HEAD), BRAID_HEAD, SPIDER, STAR, HEART, EYES, DOT, BODY }, PIN };
+})();
+</script>
+</body>
+</html>
